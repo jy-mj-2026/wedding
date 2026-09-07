@@ -1,0 +1,253 @@
+"use client";
+
+import Image from "next/image";
+import { useEffect, useRef, useState, type PointerEvent as ReactPointerEvent } from "react";
+import { createPortal } from "react-dom";
+import { weddingData } from "@/data/wedding";
+
+type GalleryImageData = (typeof weddingData.galleryImages)[number];
+
+function GalleryImage({ image, lightbox = false }: { image: GalleryImageData; lightbox?: boolean }) {
+  const [isLoaded, setIsLoaded] = useState(false);
+  const [hasFailed, setHasFailed] = useState(false);
+  const imageRef = useRef<HTMLImageElement | null>(null);
+
+  useEffect(() => {
+    const element = imageRef.current;
+    if (!element) return;
+
+    const handleLoad = () => {
+      if (element.naturalWidth > 0) setIsLoaded(true);
+    };
+    const handleError = () => setHasFailed(true);
+
+    if (element.complete) {
+      if (element.naturalWidth > 0) handleLoad();
+      else handleError();
+    } else {
+      element.addEventListener("load", handleLoad);
+      element.addEventListener("error", handleError);
+    }
+
+    return () => {
+      element.removeEventListener("load", handleLoad);
+      element.removeEventListener("error", handleError);
+    };
+  }, []);
+
+  return (
+    <div className={`wedding-gallery-image ${lightbox ? "is-lightbox" : ""}`}>
+      <div
+        className="wedding-gallery-placeholder"
+        role={hasFailed ? "img" : undefined}
+        aria-label={hasFailed ? image.alt : undefined}
+        aria-hidden={hasFailed ? undefined : true}
+      >
+        <span>PHOTO</span>
+        <i aria-hidden="true" />
+      </div>
+      {!hasFailed && (
+        <Image
+          ref={imageRef}
+          className={isLoaded ? "is-loaded" : ""}
+          src={image.src}
+          alt={image.alt}
+          fill
+          sizes={lightbox ? "100vw" : "(max-width: 480px) calc(100vw - 48px), 432px"}
+          loading="eager"
+          draggable={false}
+          onLoad={() => setIsLoaded(true)}
+          onError={() => setHasFailed(true)}
+        />
+      )}
+    </div>
+  );
+}
+
+export function WeddingGallery() {
+  const [currentIndex, setCurrentIndex] = useState(0);
+  const [slideDirection, setSlideDirection] = useState<"previous" | "next">("next");
+  const [activeIndex, setActiveIndex] = useState<number | null>(null);
+  const galleryRef = useRef<HTMLElement | null>(null);
+  const closeButtonRef = useRef<HTMLButtonElement | null>(null);
+  const slidePointerStartRef = useRef<{ id: number; x: number; y: number } | null>(null);
+  const slideSwipeTimeRef = useRef(0);
+  const lightboxPointerStartRef = useRef<{ id: number; x: number; y: number } | null>(null);
+  const images = weddingData.galleryImages;
+  const isLightboxOpen = activeIndex !== null;
+
+  useEffect(() => {
+    if (!isLightboxOpen) return;
+
+    const body = document.body;
+    const invitation = document.querySelector<HTMLElement>("#wedding-invitation");
+    const previouslyFocused = document.activeElement as HTMLElement | null;
+    const scrollPosition = window.scrollY;
+    const previousStyles = {
+      overflow: body.style.overflow,
+      position: body.style.position,
+      top: body.style.top,
+      width: body.style.width,
+    };
+
+    invitation?.setAttribute("inert", "");
+    body.style.overflow = "hidden";
+    body.style.position = "fixed";
+    body.style.top = `-${scrollPosition}px`;
+    body.style.width = "100%";
+    const frame = requestAnimationFrame(() => closeButtonRef.current?.focus());
+
+    return () => {
+      cancelAnimationFrame(frame);
+      invitation?.removeAttribute("inert");
+      body.style.overflow = previousStyles.overflow;
+      body.style.position = previousStyles.position;
+      body.style.top = previousStyles.top;
+      body.style.width = previousStyles.width;
+      const root = document.documentElement;
+      const previousScrollBehavior = root.style.scrollBehavior;
+      root.style.scrollBehavior = "auto";
+      window.scrollTo({ top: scrollPosition, behavior: "auto" });
+      root.style.scrollBehavior = previousScrollBehavior;
+      previouslyFocused?.focus({ preventScroll: true });
+    };
+  }, [isLightboxOpen]);
+
+  useEffect(() => {
+    if (!isLightboxOpen) return;
+
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === "Escape") setActiveIndex(null);
+      if (event.key === "ArrowLeft") {
+        event.preventDefault();
+        setActiveIndex((current) => current === null ? null : Math.max(0, current - 1));
+      }
+      if (event.key === "ArrowRight") {
+        event.preventDefault();
+        setActiveIndex((current) => current === null ? null : Math.min(images.length - 1, current + 1));
+      }
+    };
+
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [images.length, isLightboxOpen]);
+
+  function moveSlide(direction: -1 | 1) {
+    const nextIndex = Math.max(0, Math.min(images.length - 1, currentIndex + direction));
+    if (nextIndex === currentIndex) return;
+    setSlideDirection(direction < 0 ? "previous" : "next");
+    setCurrentIndex(nextIndex);
+  }
+
+  function moveLightbox(direction: -1 | 1) {
+    setActiveIndex((current) => current === null
+      ? null
+      : Math.max(0, Math.min(images.length - 1, current + direction)));
+  }
+
+  function handleSlidePointerDown(event: ReactPointerEvent<HTMLButtonElement>) {
+    if (event.pointerType === "mouse") return;
+    slidePointerStartRef.current = { id: event.pointerId, x: event.clientX, y: event.clientY };
+  }
+
+  function handleSlidePointerUp(event: ReactPointerEvent<HTMLButtonElement>) {
+    const start = slidePointerStartRef.current;
+    slidePointerStartRef.current = null;
+    if (!start || start.id !== event.pointerId) return;
+
+    const deltaX = event.clientX - start.x;
+    const deltaY = event.clientY - start.y;
+    if (Math.abs(deltaX) < 48 || Math.abs(deltaX) < Math.abs(deltaY) * 1.3) return;
+    slideSwipeTimeRef.current = Date.now();
+    moveSlide(deltaX < 0 ? 1 : -1);
+  }
+
+  function handleLightboxPointerDown(event: ReactPointerEvent<HTMLDivElement>) {
+    if (event.pointerType === "mouse") return;
+    lightboxPointerStartRef.current = { id: event.pointerId, x: event.clientX, y: event.clientY };
+  }
+
+  function handleLightboxPointerUp(event: ReactPointerEvent<HTMLDivElement>) {
+    const start = lightboxPointerStartRef.current;
+    lightboxPointerStartRef.current = null;
+    if (!start || start.id !== event.pointerId) return;
+
+    const deltaX = event.clientX - start.x;
+    const deltaY = event.clientY - start.y;
+    if (Math.abs(deltaX) < 52 || Math.abs(deltaX) < Math.abs(deltaY) * 1.25) return;
+    moveLightbox(deltaX < 0 ? 1 : -1);
+  }
+
+  const lightbox = activeIndex !== null ? createPortal(
+    <div className="wedding-lightbox" role="dialog" aria-modal="true" aria-label="웨딩 사진 크게 보기">
+      <div className="wedding-lightbox-topbar">
+        <p aria-live="polite">{activeIndex + 1} / {images.length}</p>
+        <button ref={closeButtonRef} type="button" onClick={() => setActiveIndex(null)} aria-label="사진 크게 보기 닫기">×</button>
+      </div>
+
+      <div
+        className="wedding-lightbox-media"
+        onPointerDown={handleLightboxPointerDown}
+        onPointerUp={handleLightboxPointerUp}
+        onPointerCancel={() => { lightboxPointerStartRef.current = null; }}
+      >
+        <GalleryImage key={images[activeIndex].src} image={images[activeIndex]} lightbox />
+      </div>
+
+      <button className="wedding-lightbox-nav is-previous" type="button" onClick={() => moveLightbox(-1)} aria-label="이전 사진" disabled={activeIndex === 0}>‹</button>
+      <button className="wedding-lightbox-nav is-next" type="button" onClick={() => moveLightbox(1)} aria-label="다음 사진" disabled={activeIndex === images.length - 1}>›</button>
+    </div>,
+    document.body,
+  ) : null;
+
+  return (
+    <section ref={galleryRef} className="wedding-section wedding-gallery" aria-labelledby="gallery-title">
+      <div className="wedding-section-heading">
+        <p className="wedding-section-code">VISUAL ARCHIVE</p>
+        <h2 id="gallery-title">갤러리</h2>
+      </div>
+
+      <div className="wedding-gallery-carousel">
+        <div className="wedding-gallery-frame">
+          <button
+            key={images[currentIndex].src}
+            type="button"
+            className={`wedding-gallery-slide is-${slideDirection}`}
+            onClick={() => {
+              if (Date.now() - slideSwipeTimeRef.current < 400) return;
+              setActiveIndex(currentIndex);
+            }}
+            onPointerDown={handleSlidePointerDown}
+            onPointerUp={handleSlidePointerUp}
+            onPointerCancel={() => { slidePointerStartRef.current = null; }}
+            aria-label={`${images[currentIndex].alt} 크게 보기`}
+          >
+            <GalleryImage image={images[currentIndex]} />
+          </button>
+        </div>
+
+        <div className="wedding-gallery-controls">
+          <button type="button" onClick={() => moveSlide(-1)} aria-label="이전 사진" disabled={currentIndex === 0}>‹</button>
+          <div className="wedding-gallery-status">
+            <p className="wedding-gallery-counter" aria-live="polite">
+              {String(currentIndex + 1).padStart(2, "0")} <span>/</span> {String(images.length).padStart(2, "0")}
+            </p>
+            <div
+              className="wedding-gallery-progress"
+              role="progressbar"
+              aria-label="갤러리 진행 상태"
+              aria-valuemin={1}
+              aria-valuemax={images.length}
+              aria-valuenow={currentIndex + 1}
+            >
+              <i style={{ transform: `scaleX(${(currentIndex + 1) / images.length})` }} />
+            </div>
+          </div>
+          <button type="button" onClick={() => moveSlide(1)} aria-label="다음 사진" disabled={currentIndex === images.length - 1}>›</button>
+        </div>
+      </div>
+
+      {lightbox}
+    </section>
+  );
+}

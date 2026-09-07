@@ -1,0 +1,259 @@
+"use client";
+
+import { type FormEvent, useEffect, useRef, useState } from "react";
+import { weddingData } from "@/data/wedding";
+import { WeddingInvitation } from "@/components/wedding-invitation";
+import { lookupGuest } from "@/lib/guest-api";
+
+type AuthorizationState = "idle" | "checking" | "confirmed" | "not-found" | "request-error";
+type IdentifiedGuest = { name: string; message: string };
+
+const guestRequestTimeout = 10000;
+const minimumCheckingDuration = 450;
+
+export function InvitationExperience() {
+  const [name, setName] = useState("");
+  const [status, setStatus] = useState<AuthorizationState>("idle");
+  const [guest, setGuest] = useState<IdentifiedGuest | null>(null);
+  const [isUnlocking, setIsUnlocking] = useState(false);
+  const [isInvitationOpen, setIsInvitationOpen] = useState(false);
+  const requestControllerRef = useRef<AbortController | null>(null);
+  const requestTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const openingTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  useEffect(() => {
+    return () => {
+      requestControllerRef.current?.abort();
+      if (requestTimeoutRef.current) clearTimeout(requestTimeoutRef.current);
+      if (openingTimerRef.current) clearTimeout(openingTimerRef.current);
+    };
+  }, []);
+
+  useEffect(() => {
+    if (!isInvitationOpen) return;
+
+    const frame = requestAnimationFrame(() => {
+      window.scrollTo({ top: 0, behavior: "auto" });
+    });
+
+    return () => cancelAnimationFrame(frame);
+  }, [isInvitationOpen]);
+
+  async function verifyGuest(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    const trimmedName = name.trim();
+    if (!trimmedName || status === "checking") return;
+
+    setStatus("checking");
+    setGuest(null);
+
+    const controller = new AbortController();
+    let didTimeout = false;
+    requestControllerRef.current = controller;
+    requestTimeoutRef.current = setTimeout(() => {
+      didTimeout = true;
+      controller.abort();
+    }, guestRequestTimeout);
+
+    try {
+      const [result] = await Promise.all([
+        lookupGuest(trimmedName, controller.signal),
+        new Promise((resolve) => setTimeout(resolve, minimumCheckingDuration)),
+      ]);
+
+      if (result.found) {
+        setGuest({ name: trimmedName, message: result.message });
+        setStatus("confirmed");
+      } else {
+        setStatus("not-found");
+      }
+    } catch {
+      if (controller.signal.aborted && !didTimeout) return;
+      setStatus("request-error");
+    } finally {
+      if (requestTimeoutRef.current) clearTimeout(requestTimeoutRef.current);
+      if (requestControllerRef.current === controller) requestControllerRef.current = null;
+    }
+  }
+
+  function updateName(value: string) {
+    setName(value);
+    if (status === "confirmed" || status === "not-found" || status === "request-error") {
+      setGuest(null);
+      setStatus("idle");
+    }
+  }
+
+  function openInvitation() {
+    if (isUnlocking || isInvitationOpen) return;
+
+    const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    if (reduceMotion) {
+      window.scrollTo({ top: 0, behavior: "auto" });
+      setIsInvitationOpen(true);
+      return;
+    }
+
+    setIsUnlocking(true);
+    openingTimerRef.current = setTimeout(() => {
+      window.scrollTo({ top: 0, behavior: "auto" });
+      setIsInvitationOpen(true);
+    }, 420);
+  }
+
+  const isChecking = status === "checking";
+
+  if (isInvitationOpen) {
+    return <WeddingInvitation />;
+  }
+
+  return (
+    <section
+      className={`invitation-access ${isUnlocking ? "is-unlocking" : ""}`}
+      aria-labelledby="invitation-title"
+    >
+        <div className="invitation-orbit invitation-orbit-one" aria-hidden="true" />
+        <div className="invitation-orbit invitation-orbit-two" aria-hidden="true" />
+
+        {isUnlocking && (
+          <div className="invitation-unlock-status" role="status" aria-live="assertive">
+            <span aria-hidden="true">✓</span>
+            <p>접속 승인 완료</p>
+            <small>ACCESS GRANTED</small>
+          </div>
+        )}
+
+        <header className="invitation-header">
+          <div className="invitation-header-line">
+            <span className="invitation-online-dot" aria-hidden="true" />
+            <span>SYSTEM ONLINE</span>
+            <span className="invitation-header-fill" aria-hidden="true" />
+            <span>SEOUL / KR</span>
+          </div>
+          <div className="invitation-header-main">
+            <div>
+              <p className="invitation-microcopy">SECURE INVITATION SYSTEM</p>
+              <h1 id="invitation-title">초대 인증 시스템</h1>
+            </div>
+            <p className="invitation-node">{weddingData.missionCode}</p>
+          </div>
+        </header>
+
+        <div className="invitation-status" aria-hidden="true">
+          <span>보안 연결</span>
+          <span className="invitation-status-track"><span /></span>
+          <span>준비 완료</span>
+        </div>
+
+        <section className="invitation-details" aria-label="결혼식 정보">
+          <div className="invitation-data-card">
+            <div className="invitation-data-heading">
+              <span aria-hidden="true">01</span>
+              <p>예식 일시</p>
+            </div>
+            <p className="invitation-data-value">{weddingData.date} {weddingData.weekday}</p>
+            <p className="invitation-data-subvalue">{weddingData.time}</p>
+          </div>
+          <div className="invitation-data-card">
+            <div className="invitation-data-heading">
+              <span aria-hidden="true">02</span>
+              <p>예식 장소</p>
+            </div>
+            <p className="invitation-data-value">{weddingData.venue}</p>
+            <p className="invitation-data-subvalue">{weddingData.hall}</p>
+          </div>
+        </section>
+
+        <section className="invitation-authorization" aria-labelledby="guest-check-title">
+          <div className="invitation-auth-heading">
+            <div>
+              <p className="invitation-microcopy">GUEST AUTHORIZATION</p>
+              <h2 id="guest-check-title">초대 대상 확인</h2>
+            </div>
+            <span className="invitation-auth-index" aria-hidden="true">03</span>
+          </div>
+          <p className="invitation-auth-description">
+            성함을 입력하시면 준비된 초대 메시지를 확인하실 수 있습니다.
+          </p>
+
+          <form className="invitation-form" onSubmit={verifyGuest}>
+            <div className="invitation-input-frame">
+              <span aria-hidden="true">[</span>
+              <input
+                id="invitation-guest-name"
+                type="text"
+                value={name}
+                onChange={(event) => updateName(event.target.value)}
+                placeholder="성함을 입력해주세요"
+                aria-label="성함을 입력해주세요"
+                aria-describedby="invitation-result"
+                autoComplete="name"
+                disabled={isChecking}
+              />
+              <span aria-hidden="true">]</span>
+              {isChecking && <span className="invitation-input-scan" aria-hidden="true" />}
+            </div>
+            <button type="submit" disabled={isChecking || !name.trim()}>
+              {isChecking ? "확인 중" : "확인하기"}
+            </button>
+          </form>
+
+          <div
+            id="invitation-result"
+            className={`invitation-result invitation-result-${status}`}
+            aria-live="polite"
+            aria-atomic="true"
+          >
+            {status === "checking" && (
+              <div className="invitation-checking">
+                <span className="invitation-checking-pulse" aria-hidden="true" />
+                <p>초대 정보를 확인하고 있습니다...</p>
+              </div>
+            )}
+
+            {status === "confirmed" && guest && (
+              <div className="invitation-confirmed">
+                <div className="invitation-confirmed-title">
+                  <span aria-hidden="true">✓</span>
+                  <div>
+                    <p>초대 손님 확인 완료</p>
+                    <small>AUTHORIZATION COMPLETE</small>
+                  </div>
+                </div>
+                <p className="invitation-guest-name">{guest.name} <span>님</span></p>
+                <p className="invitation-guest-message">{guest.message}</p>
+                <button
+                  type="button"
+                  className="invitation-open-button"
+                  onClick={openInvitation}
+                  disabled={isUnlocking}
+                >
+                  <span>초대장 열기</span>
+                  <small>INVITATION ACCESS</small>
+                </button>
+              </div>
+            )}
+
+            {status === "not-found" && (
+              <div className="invitation-not-found">
+                <p>성함을 다시 한번 확인해주세요.</p>
+                <small>초대받으신 성함과 동일하게 입력해주세요.</small>
+              </div>
+            )}
+
+            {status === "request-error" && (
+              <div className="invitation-request-error">
+                <p>초대 정보를 불러오지 못했습니다.</p>
+                <small>잠시 후 다시 시도해주세요.</small>
+              </div>
+            )}
+          </div>
+        </section>
+
+        <footer className="invitation-footer" aria-hidden="true">
+          <span>SECURE CONNECTION</span>
+          <span>NODE : {weddingData.missionCode}</span>
+        </footer>
+    </section>
+  );
+}
