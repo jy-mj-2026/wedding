@@ -8,7 +8,6 @@ import { lookupGuest } from "@/lib/guest-api";
 type AuthorizationState = "idle" | "checking" | "confirmed" | "not-found" | "request-error";
 type IdentifiedGuest = { name: string; message: string };
 
-const guestRequestTimeout = 10000;
 const minimumCheckingDuration = 450;
 
 export function InvitationExperience() {
@@ -18,13 +17,11 @@ export function InvitationExperience() {
   const [isUnlocking, setIsUnlocking] = useState(false);
   const [isInvitationOpen, setIsInvitationOpen] = useState(false);
   const requestControllerRef = useRef<AbortController | null>(null);
-  const requestTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const openingTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   useEffect(() => {
     return () => {
       requestControllerRef.current?.abort();
-      if (requestTimeoutRef.current) clearTimeout(requestTimeoutRef.current);
       if (openingTimerRef.current) clearTimeout(openingTimerRef.current);
     };
   }, []);
@@ -48,12 +45,7 @@ export function InvitationExperience() {
     setGuest(null);
 
     const controller = new AbortController();
-    let didTimeout = false;
     requestControllerRef.current = controller;
-    requestTimeoutRef.current = setTimeout(() => {
-      didTimeout = true;
-      controller.abort();
-    }, guestRequestTimeout);
 
     try {
       const [result] = await Promise.all([
@@ -68,10 +60,9 @@ export function InvitationExperience() {
         setStatus("not-found");
       }
     } catch {
-      if (controller.signal.aborted && !didTimeout) return;
+      if (controller.signal.aborted) return;
       setStatus("request-error");
     } finally {
-      if (requestTimeoutRef.current) clearTimeout(requestTimeoutRef.current);
       if (requestControllerRef.current === controller) requestControllerRef.current = null;
     }
   }
@@ -244,7 +235,7 @@ export function InvitationExperience() {
             {status === "request-error" && (
               <div className="invitation-request-error">
                 <p>초대 정보를 불러오지 못했습니다.</p>
-                <small>잠시 후 다시 시도해주세요.</small>
+              <small>잠시 후 다시 시도해 주세요.</small>
               </div>
             )}
           </div>
