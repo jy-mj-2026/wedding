@@ -1,6 +1,5 @@
 import type { Metadata, Viewport } from "next";
 import type { ReactNode } from "react";
-import { weddingData } from "@/data/wedding";
 import "./globals.css";
 
 const metadataBaseUrl = "https://jy-mj-2026.github.io";
@@ -23,9 +22,9 @@ export const metadata: Metadata = {
     images: [
       {
         url: socialImageUrl,
-        width: 1513,
-        height: 795,
-        alt: `${weddingData.groomName} · ${weddingData.brideName} 모바일 청첩장`,
+        width: 1200,
+        height: 630,
+        alt: "최종윤 · 장민정 결혼식 초대장",
       },
     ],
   },
