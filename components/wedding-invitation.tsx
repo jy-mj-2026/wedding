@@ -129,6 +129,9 @@ export function WeddingInvitation() {
               height={1500}
               priority
               sizes="(max-width: 480px) 100vw, 480px"
+              draggable={false}
+              onContextMenu={(event) => event.preventDefault()}
+              onDragStart={(event) => event.preventDefault()}
               onLoad={() => setIsMainImageLoaded(true)}
               onError={() => setHasMainImageFailed(true)}
             />

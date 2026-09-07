@@ -922,6 +922,10 @@ input:focus-visible {
   object-fit: contain;
   opacity: 0;
   transition: opacity 320ms ease;
+  -webkit-touch-callout: none;
+  -webkit-user-drag: none;
+  -webkit-user-select: none;
+  user-select: none;
 }
 
 .wedding-main-image img.is-loaded {
@@ -1289,6 +1293,10 @@ input:focus-visible {
   object-fit: contain;
   opacity: 0;
   transition: opacity 240ms ease;
+  -webkit-touch-callout: none;
+  -webkit-user-drag: none;
+  -webkit-user-select: none;
+  user-select: none;
 }
 
 .wedding-gallery-image img.is-loaded {
@@ -1416,7 +1424,8 @@ input:focus-visible {
     rgba(3, 7, 10, 0.975);
   background-size: 32px 32px, 32px 32px, auto;
   color: #eef4f3;
-  touch-action: pinch-zoom;
+  overscroll-behavior: contain;
+  touch-action: none;
   animation: wedding-lightbox-in 180ms ease-out both;
 }
 
@@ -1467,7 +1476,16 @@ input:focus-visible {
   position: absolute;
   inset: max(70px, calc(env(safe-area-inset-top) + 60px)) 14px max(64px, calc(env(safe-area-inset-bottom) + 54px));
   overflow: hidden;
-  touch-action: pan-y pinch-zoom;
+  touch-action: none;
+}
+
+.wedding-lightbox-transform {
+  position: absolute;
+  inset: 0;
+  backface-visibility: hidden;
+  transform: translate3d(0, 0, 0) scale(1);
+  transform-origin: center;
+  will-change: transform;
 }
 
 .wedding-gallery-image.is-lightbox img {

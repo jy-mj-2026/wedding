@@ -6,6 +6,41 @@ import { createPortal } from "react-dom";
 import { weddingData } from "@/data/wedding";
 
 type GalleryImageData = (typeof weddingData.galleryImages)[number];
+type Point = { x: number; y: number };
+type LightboxTransform = { scale: number; x: number; y: number };
+type LightboxGeometry = {
+  mediaWidth: number;
+  mediaHeight: number;
+  imageWidth: number;
+  imageHeight: number;
+};
+type LightboxGesture =
+  | {
+      mode: "pan";
+      pointerId: number;
+      start: Point;
+      origin: LightboxTransform;
+    }
+  | {
+      mode: "pinch";
+      startDistance: number;
+      startMidpoint: Point;
+      center: Point;
+      origin: LightboxTransform;
+    };
+
+const maximumLightboxScale = 2;
+
+function getDistance(first: Point, second: Point) {
+  return Math.hypot(second.x - first.x, second.y - first.y);
+}
+
+function getMidpoint(first: Point, second: Point): Point {
+  return {
+    x: (first.x + second.x) / 2,
+    y: (first.y + second.y) / 2,
+  };
+}
 
 function GalleryImage({ image, lightbox = false }: { image: GalleryImageData; lightbox?: boolean }) {
   const [isLoaded, setIsLoaded] = useState(false);
@@ -56,6 +91,8 @@ function GalleryImage({ image, lightbox = false }: { image: GalleryImageData; li
           sizes={lightbox ? "100vw" : "(max-width: 480px) calc(100vw - 48px), 432px"}
           loading="eager"
           draggable={false}
+          onContextMenu={(event) => event.preventDefault()}
+          onDragStart={(event) => event.preventDefault()}
           onLoad={() => setIsLoaded(true)}
           onError={() => setHasFailed(true)}
         />
@@ -72,9 +109,81 @@ export function WeddingGallery() {
   const closeButtonRef = useRef<HTMLButtonElement | null>(null);
   const slidePointerStartRef = useRef<{ id: number; x: number; y: number } | null>(null);
   const slideSwipeTimeRef = useRef(0);
-  const lightboxPointerStartRef = useRef<{ id: number; x: number; y: number } | null>(null);
+  const lightboxMediaRef = useRef<HTMLDivElement | null>(null);
+  const lightboxTransformElementRef = useRef<HTMLDivElement | null>(null);
+  const lightboxPointersRef = useRef(new Map<number, Point>());
+  const lightboxGestureRef = useRef<LightboxGesture | null>(null);
+  const lightboxTransformRef = useRef<LightboxTransform>({ scale: 1, x: 0, y: 0 });
+  const lightboxGeometryRef = useRef<LightboxGeometry | null>(null);
+  const lightboxHadPinchRef = useRef(false);
   const images = weddingData.galleryImages;
   const isLightboxOpen = activeIndex !== null;
+
+  function measureLightboxGeometry() {
+    const media = lightboxMediaRef.current;
+    if (!media) return null;
+
+    const mediaWidth = media.clientWidth;
+    const mediaHeight = media.clientHeight;
+    const image = lightboxTransformElementRef.current?.querySelector("img");
+
+    if (!image?.naturalWidth || !image.naturalHeight) {
+      return { mediaWidth, mediaHeight, imageWidth: mediaWidth, imageHeight: mediaHeight };
+    }
+
+    const fitScale = Math.min(mediaWidth / image.naturalWidth, mediaHeight / image.naturalHeight);
+    return {
+      mediaWidth,
+      mediaHeight,
+      imageWidth: image.naturalWidth * fitScale,
+      imageHeight: image.naturalHeight * fitScale,
+    };
+  }
+
+  function applyLightboxTransform(next: LightboxTransform, animated = false) {
+    const scale = Math.max(1, Math.min(maximumLightboxScale, next.scale));
+    const geometry = lightboxGeometryRef.current ?? measureLightboxGeometry();
+    if (geometry) lightboxGeometryRef.current = geometry;
+
+    const horizontalLimit = geometry
+      ? Math.max(0, (geometry.imageWidth * scale - geometry.mediaWidth) / 2)
+      : 0;
+    const verticalLimit = geometry
+      ? Math.max(0, (geometry.imageHeight * scale - geometry.mediaHeight) / 2)
+      : 0;
+    const transform = {
+      scale,
+      x: scale === 1 ? 0 : Math.max(-horizontalLimit, Math.min(horizontalLimit, next.x)),
+      y: scale === 1 ? 0 : Math.max(-verticalLimit, Math.min(verticalLimit, next.y)),
+    };
+
+    lightboxTransformRef.current = transform;
+    const element = lightboxTransformElementRef.current;
+    if (!element) return;
+
+    element.style.transition = animated ? "transform 180ms cubic-bezier(0.22, 1, 0.36, 1)" : "none";
+    element.style.transform = `translate3d(${transform.x}px, ${transform.y}px, 0) scale(${transform.scale})`;
+  }
+
+  function beginPinchGesture() {
+    const points = Array.from(lightboxPointersRef.current.values());
+    if (points.length < 2) return;
+
+    const [first, second] = points;
+    const rect = lightboxMediaRef.current?.getBoundingClientRect();
+    const center = rect
+      ? { x: rect.left + rect.width / 2, y: rect.top + rect.height / 2 }
+      : { x: 0, y: 0 };
+
+    lightboxHadPinchRef.current = true;
+    lightboxGestureRef.current = {
+      mode: "pinch",
+      startDistance: Math.max(1, getDistance(first, second)),
+      startMidpoint: getMidpoint(first, second),
+      center,
+      origin: { ...lightboxTransformRef.current },
+    };
+  }
 
   useEffect(() => {
     if (!isLightboxOpen) return;
@@ -132,6 +241,20 @@ export function WeddingGallery() {
     return () => window.removeEventListener("keydown", handleKeyDown);
   }, [images.length, isLightboxOpen]);
 
+  useEffect(() => {
+    lightboxPointersRef.current.clear();
+    lightboxGestureRef.current = null;
+    lightboxHadPinchRef.current = false;
+    lightboxGeometryRef.current = null;
+    lightboxTransformRef.current = { scale: 1, x: 0, y: 0 };
+
+    const element = lightboxTransformElementRef.current;
+    if (element) {
+      element.style.transition = "none";
+      element.style.transform = "translate3d(0, 0, 0) scale(1)";
+    }
+  }, [activeIndex]);
+
   function moveSlide(direction: -1 | 1) {
     const nextIndex = Math.max(0, Math.min(images.length - 1, currentIndex + direction));
     if (nextIndex === currentIndex) return;
@@ -163,19 +286,102 @@ export function WeddingGallery() {
   }
 
   function handleLightboxPointerDown(event: ReactPointerEvent<HTMLDivElement>) {
-    if (event.pointerType === "mouse") return;
-    lightboxPointerStartRef.current = { id: event.pointerId, x: event.clientX, y: event.clientY };
+    if (event.pointerType === "mouse" && event.button !== 0) return;
+
+    event.currentTarget.setPointerCapture(event.pointerId);
+    lightboxTransformElementRef.current?.style.setProperty("transition", "none");
+    lightboxGeometryRef.current = measureLightboxGeometry();
+    lightboxPointersRef.current.set(event.pointerId, { x: event.clientX, y: event.clientY });
+
+    if (lightboxPointersRef.current.size >= 2) {
+      beginPinchGesture();
+      return;
+    }
+
+    lightboxGestureRef.current = {
+      mode: "pan",
+      pointerId: event.pointerId,
+      start: { x: event.clientX, y: event.clientY },
+      origin: { ...lightboxTransformRef.current },
+    };
+  }
+
+  function handleLightboxPointerMove(event: ReactPointerEvent<HTMLDivElement>) {
+    if (!lightboxPointersRef.current.has(event.pointerId)) return;
+
+    lightboxPointersRef.current.set(event.pointerId, { x: event.clientX, y: event.clientY });
+    const gesture = lightboxGestureRef.current;
+
+    if (lightboxPointersRef.current.size >= 2) {
+      event.preventDefault();
+      if (!gesture || gesture.mode !== "pinch") {
+        beginPinchGesture();
+        return;
+      }
+
+      const [first, second] = Array.from(lightboxPointersRef.current.values());
+      const midpoint = getMidpoint(first, second);
+      const scale = Math.max(
+        1,
+        Math.min(maximumLightboxScale, gesture.origin.scale * (getDistance(first, second) / gesture.startDistance)),
+      );
+      const scaleRatio = scale / gesture.origin.scale;
+      const focalX = gesture.startMidpoint.x - gesture.center.x - gesture.origin.x;
+      const focalY = gesture.startMidpoint.y - gesture.center.y - gesture.origin.y;
+
+      applyLightboxTransform({
+        scale,
+        x: midpoint.x - gesture.center.x - focalX * scaleRatio,
+        y: midpoint.y - gesture.center.y - focalY * scaleRatio,
+      });
+      return;
+    }
+
+    if (gesture?.mode === "pan" && gesture.pointerId === event.pointerId && gesture.origin.scale > 1) {
+      event.preventDefault();
+      applyLightboxTransform({
+        scale: gesture.origin.scale,
+        x: gesture.origin.x + event.clientX - gesture.start.x,
+        y: gesture.origin.y + event.clientY - gesture.start.y,
+      });
+    }
   }
 
   function handleLightboxPointerUp(event: ReactPointerEvent<HTMLDivElement>) {
-    const start = lightboxPointerStartRef.current;
-    lightboxPointerStartRef.current = null;
-    if (!start || start.id !== event.pointerId) return;
+    const gesture = lightboxGestureRef.current;
+    const wasSinglePointer = lightboxPointersRef.current.size === 1;
+    const canSwipe = wasSinglePointer
+      && gesture?.mode === "pan"
+      && gesture.pointerId === event.pointerId
+      && !lightboxHadPinchRef.current
+      && lightboxTransformRef.current.scale === 1;
+    const deltaX = canSwipe && gesture?.mode === "pan" ? event.clientX - gesture.start.x : 0;
+    const deltaY = canSwipe && gesture?.mode === "pan" ? event.clientY - gesture.start.y : 0;
 
-    const deltaX = event.clientX - start.x;
-    const deltaY = event.clientY - start.y;
-    if (Math.abs(deltaX) < 52 || Math.abs(deltaX) < Math.abs(deltaY) * 1.25) return;
-    moveLightbox(deltaX < 0 ? 1 : -1);
+    lightboxPointersRef.current.delete(event.pointerId);
+
+    if (lightboxPointersRef.current.size === 1) {
+      const [pointerId, point] = Array.from(lightboxPointersRef.current.entries())[0];
+      lightboxGestureRef.current = {
+        mode: "pan",
+        pointerId,
+        start: point,
+        origin: { ...lightboxTransformRef.current },
+      };
+    } else if (lightboxPointersRef.current.size === 0) {
+      lightboxGestureRef.current = null;
+      lightboxHadPinchRef.current = false;
+    }
+
+    if (Math.abs(deltaX) >= 52 && Math.abs(deltaX) >= Math.abs(deltaY) * 1.25) {
+      moveLightbox(deltaX < 0 ? 1 : -1);
+    }
+  }
+
+  function handleLightboxPointerCancel(event: ReactPointerEvent<HTMLDivElement>) {
+    lightboxPointersRef.current.delete(event.pointerId);
+    lightboxGestureRef.current = null;
+    lightboxHadPinchRef.current = false;
   }
 
   const lightbox = activeIndex !== null ? createPortal(
@@ -186,12 +392,20 @@ export function WeddingGallery() {
       </div>
 
       <div
+        ref={lightboxMediaRef}
         className="wedding-lightbox-media"
         onPointerDown={handleLightboxPointerDown}
+        onPointerMove={handleLightboxPointerMove}
         onPointerUp={handleLightboxPointerUp}
-        onPointerCancel={() => { lightboxPointerStartRef.current = null; }}
+        onPointerCancel={handleLightboxPointerCancel}
       >
-        <GalleryImage key={images[activeIndex].src} image={images[activeIndex]} lightbox />
+        <div
+          key={images[activeIndex].src}
+          ref={lightboxTransformElementRef}
+          className="wedding-lightbox-transform"
+        >
+          <GalleryImage image={images[activeIndex]} lightbox />
+        </div>
       </div>
 
       <button className="wedding-lightbox-nav is-previous" type="button" onClick={() => moveLightbox(-1)} aria-label="이전 사진" disabled={activeIndex === 0}>‹</button>
