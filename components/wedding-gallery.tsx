@@ -29,7 +29,10 @@ type LightboxGesture =
       origin: LightboxTransform;
     };
 
-const maximumLightboxScale = 2;
+const maximumLightboxScale = 3;
+const doubleTapLightboxScale = 2;
+const doubleTapDelay = 320;
+const doubleTapDistance = 32;
 
 function getDistance(first: Point, second: Point) {
   return Math.hypot(second.x - first.x, second.y - first.y);
@@ -116,6 +119,7 @@ export function WeddingGallery() {
   const lightboxTransformRef = useRef<LightboxTransform>({ scale: 1, x: 0, y: 0 });
   const lightboxGeometryRef = useRef<LightboxGeometry | null>(null);
   const lightboxHadPinchRef = useRef(false);
+  const lightboxLastTapRef = useRef<{ time: number; point: Point } | null>(null);
   const images = weddingData.galleryImages;
   const isLightboxOpen = activeIndex !== null;
 
@@ -185,6 +189,28 @@ export function WeddingGallery() {
     };
   }
 
+  function toggleLightboxZoom(point: Point) {
+    if (lightboxTransformRef.current.scale > 1) {
+      applyLightboxTransform({ scale: 1, x: 0, y: 0 }, true);
+      return;
+    }
+
+    const rect = lightboxMediaRef.current?.getBoundingClientRect();
+    if (!rect) return;
+
+    const center = {
+      x: rect.left + rect.width / 2,
+      y: rect.top + rect.height / 2,
+    };
+    const scaleOffset = doubleTapLightboxScale - 1;
+
+    applyLightboxTransform({
+      scale: doubleTapLightboxScale,
+      x: -(point.x - center.x) * scaleOffset,
+      y: -(point.y - center.y) * scaleOffset,
+    }, true);
+  }
+
   useEffect(() => {
     if (!isLightboxOpen) return;
 
@@ -245,6 +271,7 @@ export function WeddingGallery() {
     lightboxPointersRef.current.clear();
     lightboxGestureRef.current = null;
     lightboxHadPinchRef.current = false;
+    lightboxLastTapRef.current = null;
     lightboxGeometryRef.current = null;
     lightboxTransformRef.current = { scale: 1, x: 0, y: 0 };
 
@@ -350,13 +377,24 @@ export function WeddingGallery() {
   function handleLightboxPointerUp(event: ReactPointerEvent<HTMLDivElement>) {
     const gesture = lightboxGestureRef.current;
     const wasSinglePointer = lightboxPointersRef.current.size === 1;
+    const hadPinch = lightboxHadPinchRef.current;
+    const pointerDelta = gesture?.mode === "pan" && gesture.pointerId === event.pointerId
+      ? {
+          x: event.clientX - gesture.start.x,
+          y: event.clientY - gesture.start.y,
+        }
+      : null;
     const canSwipe = wasSinglePointer
       && gesture?.mode === "pan"
       && gesture.pointerId === event.pointerId
-      && !lightboxHadPinchRef.current
+      && !hadPinch
       && lightboxTransformRef.current.scale === 1;
-    const deltaX = canSwipe && gesture?.mode === "pan" ? event.clientX - gesture.start.x : 0;
-    const deltaY = canSwipe && gesture?.mode === "pan" ? event.clientY - gesture.start.y : 0;
+    const deltaX = canSwipe && pointerDelta ? pointerDelta.x : 0;
+    const deltaY = canSwipe && pointerDelta ? pointerDelta.y : 0;
+    const isTap = wasSinglePointer
+      && !hadPinch
+      && pointerDelta !== null
+      && Math.hypot(pointerDelta.x, pointerDelta.y) < 12;
 
     lightboxPointersRef.current.delete(event.pointerId);
 
@@ -374,7 +412,26 @@ export function WeddingGallery() {
     }
 
     if (Math.abs(deltaX) >= 52 && Math.abs(deltaX) >= Math.abs(deltaY) * 1.25) {
+      lightboxLastTapRef.current = null;
       moveLightbox(deltaX < 0 ? 1 : -1);
+      return;
+    }
+
+    if (isTap) {
+      const tap = { x: event.clientX, y: event.clientY };
+      const now = Date.now();
+      const previousTap = lightboxLastTapRef.current;
+
+      if (
+        previousTap
+        && now - previousTap.time <= doubleTapDelay
+        && getDistance(previousTap.point, tap) <= doubleTapDistance
+      ) {
+        lightboxLastTapRef.current = null;
+        toggleLightboxZoom(tap);
+      } else {
+        lightboxLastTapRef.current = { time: now, point: tap };
+      }
     }
   }
 
@@ -382,6 +439,7 @@ export function WeddingGallery() {
     lightboxPointersRef.current.delete(event.pointerId);
     lightboxGestureRef.current = null;
     lightboxHadPinchRef.current = false;
+    lightboxLastTapRef.current = null;
   }
 
   const lightbox = activeIndex !== null ? createPortal(

@@ -3,13 +3,14 @@ import type { ReactNode } from "react";
 import { weddingData } from "@/data/wedding";
 import "./globals.css";
 
+const metadataBaseUrl = "https://jy-mj-2026.github.io";
 const siteUrl = "https://jy-mj-2026.github.io/wedding/";
 const socialImageUrl = "https://jy-mj-2026.github.io/wedding/images/og/wedding-og.jpg";
 const socialTitle = "최종윤 · 장민정 결혼합니다";
-const socialDescription = "2026.12.19. 토요일 11시 | 성균관컨벤션웨딩홀";
+const socialDescription = "2026.12.19. 토요일 오전 11시 | 성균관컨벤션웨딩홀";
 
 export const metadata: Metadata = {
-  metadataBase: new URL(siteUrl),
+  metadataBase: new URL(metadataBaseUrl),
   title: socialTitle,
   description: socialDescription,
   openGraph: {
