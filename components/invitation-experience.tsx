@@ -101,91 +101,61 @@ export function InvitationExperience() {
   return (
     <section
       className={`invitation-access ${isUnlocking ? "is-unlocking" : ""}`}
-      aria-labelledby="invitation-title"
+      aria-label="모바일 청첩장 하객 확인"
     >
-        <div className="invitation-orbit invitation-orbit-one" aria-hidden="true" />
-        <div className="invitation-orbit invitation-orbit-two" aria-hidden="true" />
+      <div className="invitation-orbit invitation-orbit-one" aria-hidden="true" />
+      <div className="invitation-orbit invitation-orbit-two" aria-hidden="true" />
 
-        {isUnlocking && (
-          <div className="invitation-unlock-status" role="status" aria-live="assertive">
-            <span aria-hidden="true">✓</span>
-            <p>접속 승인 완료</p>
-            <small>ACCESS GRANTED</small>
-          </div>
-        )}
+      {isUnlocking && (
+        <div className="invitation-unlock-status" role="status" aria-live="assertive">
+          <span aria-hidden="true">✓</span>
+          <p>접속 승인 완료</p>
+        </div>
+      )}
 
-        <header className="invitation-header">
-          <div className="invitation-header-line">
-            <span className="invitation-online-dot" aria-hidden="true" />
-            <span>SYSTEM ONLINE</span>
-            <span className="invitation-header-fill" aria-hidden="true" />
-            <span>SEOUL / KR</span>
-          </div>
-          <div className="invitation-header-main">
-            <div>
-              <p className="invitation-microcopy">SECURE INVITATION SYSTEM</p>
-              <h1 id="invitation-title">초대 인증 시스템</h1>
-            </div>
-            <p className="invitation-node">{weddingData.missionCode}</p>
-          </div>
-        </header>
-
-        <div className="invitation-status" aria-hidden="true">
-          <span>보안 연결</span>
-          <span className="invitation-status-track"><span /></span>
-          <span>준비 완료</span>
+      <div className="invitation-minimal-shell">
+        <div className="invitation-minimal-marker" aria-hidden="true">
+          <span />
+          <i />
+          <span />
         </div>
 
         <section className="invitation-details" aria-label="결혼식 정보">
-          <div className="invitation-data-card">
-            <div className="invitation-data-heading">
-              <span aria-hidden="true">01</span>
-              <p>예식 일시</p>
-            </div>
+          <div className="invitation-data-block">
+            <p className="invitation-data-label">일시</p>
             <p className="invitation-data-value">{weddingData.date} {weddingData.weekday}</p>
             <p className="invitation-data-subvalue">{weddingData.time}</p>
           </div>
-          <div className="invitation-data-card">
-            <div className="invitation-data-heading">
-              <span aria-hidden="true">02</span>
-              <p>예식 장소</p>
-            </div>
+          <div className="invitation-technical-divider" aria-hidden="true"><span /></div>
+          <div className="invitation-data-block">
+            <p className="invitation-data-label">장소</p>
             <p className="invitation-data-value">{weddingData.venue}</p>
             <p className="invitation-data-subvalue">{weddingData.hall}</p>
           </div>
         </section>
 
-        <section className="invitation-authorization" aria-labelledby="guest-check-title">
-          <div className="invitation-auth-heading">
-            <div>
-              <p className="invitation-microcopy">GUEST AUTHORIZATION</p>
-              <h2 id="guest-check-title">초대 대상 확인</h2>
-            </div>
-            <span className="invitation-auth-index" aria-hidden="true">03</span>
-          </div>
-          <p className="invitation-auth-description">
-            성함을 입력하시면 준비된 초대 메시지를 확인하실 수 있습니다.
-          </p>
+        <section className="invitation-authorization" aria-label="초대 대상 확인">
+          <div className="invitation-action-transition" aria-hidden="true"><span /></div>
+          <p className="invitation-action-prompt">성함을 입력해 주세요</p>
 
           <form className="invitation-form" onSubmit={verifyGuest}>
             <div className="invitation-input-frame">
-              <span aria-hidden="true">[</span>
               <input
                 id="invitation-guest-name"
                 type="text"
                 value={name}
                 onChange={(event) => updateName(event.target.value)}
-                placeholder="성함을 입력해주세요"
-                aria-label="성함을 입력해주세요"
+                placeholder="성함"
+                aria-label="성함을 입력해 주세요"
                 aria-describedby="invitation-result"
                 autoComplete="name"
                 disabled={isChecking}
               />
-              <span aria-hidden="true">]</span>
               {isChecking && <span className="invitation-input-scan" aria-hidden="true" />}
             </div>
             <button type="submit" disabled={isChecking || !name.trim()}>
-              {isChecking ? "확인 중" : "확인하기"}
+              <span>{isChecking ? "확인 중" : "확인하기"}</span>
+              {!isChecking && <i aria-hidden="true">›</i>}
             </button>
           </form>
 
@@ -208,7 +178,6 @@ export function InvitationExperience() {
                   <span aria-hidden="true">✓</span>
                   <div>
                     <p>초대 손님 확인 완료</p>
-                    <small>AUTHORIZATION COMPLETE</small>
                   </div>
                 </div>
                 <p className="invitation-guest-name">{guest.name} <span>님</span></p>
@@ -220,7 +189,6 @@ export function InvitationExperience() {
                   disabled={isUnlocking}
                 >
                   <span>초대장 열기</span>
-                  <small>INVITATION ACCESS</small>
                 </button>
               </div>
             )}
@@ -235,16 +203,12 @@ export function InvitationExperience() {
             {status === "request-error" && (
               <div className="invitation-request-error">
                 <p>초대 정보를 불러오지 못했습니다.</p>
-              <small>잠시 후 다시 시도해 주세요.</small>
+                <small>잠시 후 다시 시도해 주세요.</small>
               </div>
             )}
           </div>
         </section>
-
-        <footer className="invitation-footer" aria-hidden="true">
-          <span>SECURE CONNECTION</span>
-          <span>NODE : {weddingData.missionCode}</span>
-        </footer>
+      </div>
     </section>
   );
 }

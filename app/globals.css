@@ -709,6 +709,327 @@ input:focus-visible {
   letter-spacing: 0.14em;
 }
 
+/* Minimal access gate */
+.invitation-access {
+  justify-content: flex-start;
+  overflow-x: hidden;
+  overflow-y: auto;
+  padding: max(28px, env(safe-area-inset-top)) 24px max(28px, env(safe-area-inset-bottom));
+  background:
+    linear-gradient(rgba(85, 215, 208, 0.009) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(85, 215, 208, 0.009) 1px, transparent 1px),
+    radial-gradient(circle at 78% 24%, rgba(48, 156, 159, 0.045), transparent 28%),
+    radial-gradient(circle at 14% 82%, rgba(48, 156, 159, 0.028), transparent 24%),
+    var(--invitation-night);
+  background-size: 30px 30px, 30px 30px, auto, auto, auto;
+  animation: none;
+}
+
+.invitation-access::after {
+  background: linear-gradient(
+    180deg,
+    rgba(5, 8, 13, 0.3),
+    transparent 25%,
+    transparent 72%,
+    rgba(5, 8, 13, 0.52)
+  );
+}
+
+.invitation-orbit {
+  border-color: rgba(85, 215, 208, 0.022);
+}
+
+.invitation-orbit::before {
+  width: 3px;
+  height: 3px;
+  background: rgba(85, 215, 208, 0.2);
+  box-shadow: 0 0 6px rgba(85, 215, 208, 0.12);
+}
+
+.invitation-orbit-one {
+  top: 7%;
+  right: -155px;
+  width: 260px;
+  height: 260px;
+}
+
+.invitation-orbit-two {
+  bottom: 3%;
+  left: -112px;
+  width: 170px;
+  height: 170px;
+}
+
+.invitation-minimal-shell {
+  position: relative;
+  width: 100%;
+  max-width: 372px;
+  flex: 0 0 auto;
+  margin-block: auto;
+  padding: 30px 18px 28px;
+  animation: invitation-enter 0.55s ease-out both;
+}
+
+.invitation-minimal-shell::before,
+.invitation-minimal-shell::after {
+  position: absolute;
+  width: 38px;
+  height: 38px;
+  content: "";
+  pointer-events: none;
+}
+
+.invitation-minimal-shell::before {
+  top: 0;
+  left: 0;
+  border-top: 1px solid rgba(85, 215, 208, 0.2);
+  border-left: 1px solid rgba(85, 215, 208, 0.2);
+}
+
+.invitation-minimal-shell::after {
+  right: 0;
+  bottom: 0;
+  border-right: 1px solid rgba(85, 215, 208, 0.14);
+  border-bottom: 1px solid rgba(85, 215, 208, 0.14);
+}
+
+.invitation-minimal-marker {
+  display: flex;
+  width: 66px;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  margin: 0 auto 38px;
+}
+
+.invitation-minimal-marker i {
+  width: 34px;
+  height: 1px;
+  background: rgba(153, 170, 169, 0.22);
+}
+
+.invitation-minimal-marker span {
+  width: 3px;
+  height: 3px;
+  background: rgba(85, 215, 208, 0.62);
+  box-shadow: 0 0 7px rgba(85, 215, 208, 0.14);
+}
+
+.invitation-minimal-marker span:last-child {
+  background: rgba(153, 170, 169, 0.24);
+  box-shadow: none;
+}
+
+.invitation-details {
+  display: block;
+  margin-top: 0;
+  padding-inline: 6px;
+  animation: none;
+}
+
+.invitation-data-block {
+  text-align: center;
+}
+
+.invitation-data-label {
+  color: rgba(85, 215, 208, 0.78);
+  font-size: 12px;
+  font-weight: 650;
+  letter-spacing: 0.08em;
+}
+
+.invitation-data-value {
+  margin-top: 10px !important;
+  color: #edf3f2;
+  font-size: clamp(20px, 5.5vw, 23px);
+  font-weight: 640;
+  line-height: 1.42;
+  letter-spacing: -0.045em;
+}
+
+.invitation-data-subvalue {
+  margin-top: 5px !important;
+  color: #94a5a3;
+  font-size: 15px;
+  font-weight: 430;
+  line-height: 1.45;
+  letter-spacing: -0.025em;
+}
+
+.invitation-technical-divider {
+  position: relative;
+  width: 58px;
+  height: 1px;
+  margin: 27px auto;
+  background: rgba(153, 170, 169, 0.2);
+}
+
+.invitation-technical-divider::before,
+.invitation-technical-divider::after {
+  position: absolute;
+  top: -1px;
+  width: 3px;
+  height: 3px;
+  background: rgba(85, 215, 208, 0.46);
+  content: "";
+}
+
+.invitation-technical-divider::before {
+  left: -1px;
+}
+
+.invitation-technical-divider::after {
+  right: -1px;
+  background: rgba(153, 170, 169, 0.28);
+}
+
+.invitation-authorization {
+  margin-top: 56px;
+  padding: 0 4px;
+  border: 0;
+  background: transparent;
+  clip-path: none;
+  animation: none;
+}
+
+.invitation-authorization::before,
+.invitation-authorization::after {
+  content: none;
+}
+
+.invitation-action-transition {
+  position: relative;
+  width: 46px;
+  height: 5px;
+  margin-inline: auto;
+}
+
+.invitation-action-transition::before {
+  position: absolute;
+  top: 2px;
+  left: 0;
+  width: 100%;
+  height: 1px;
+  background: rgba(153, 170, 169, 0.17);
+  content: "";
+}
+
+.invitation-action-transition span {
+  position: absolute;
+  top: 0;
+  left: 50%;
+  width: 5px;
+  height: 5px;
+  border: 1px solid rgba(85, 215, 208, 0.56);
+  background: var(--invitation-night);
+  transform: translateX(-50%) rotate(45deg);
+}
+
+.invitation-action-prompt {
+  margin-top: 18px !important;
+  color: #c7d1d0;
+  font-size: 15px;
+  font-weight: 450;
+  letter-spacing: -0.025em;
+  line-height: 1.5;
+  text-align: center;
+}
+
+.invitation-form {
+  margin-top: 16px;
+}
+
+.invitation-input-frame {
+  height: 56px;
+  border-color: rgba(104, 202, 198, 0.31);
+  background:
+    linear-gradient(90deg, rgba(85, 215, 208, 0.018) 1px, transparent 1px),
+    rgba(3, 10, 15, 0.78);
+  background-size: 16px 100%, auto;
+  clip-path: polygon(8px 0, 100% 0, 100% calc(100% - 8px), calc(100% - 8px) 100%, 0 100%, 0 8px);
+}
+
+.invitation-input-frame::after {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  width: 3px;
+  height: 3px;
+  background: rgba(85, 215, 208, 0.38);
+  content: "";
+  pointer-events: none;
+}
+
+.invitation-input-frame:focus-within {
+  border-color: rgba(85, 215, 208, 0.72);
+  box-shadow: 0 0 0 1px rgba(85, 215, 208, 0.08), inset 0 0 14px rgba(85, 215, 208, 0.025);
+}
+
+.invitation-input-frame input {
+  position: relative;
+  z-index: 1;
+  padding: 0 18px;
+  font-size: 16px;
+}
+
+.invitation-input-frame input::placeholder {
+  color: #718280;
+}
+
+.invitation-form > button {
+  display: flex;
+  min-height: 52px;
+  align-items: center;
+  justify-content: space-between;
+  margin-top: 14px;
+  padding: 0 18px;
+  border-color: rgba(85, 215, 208, 0.44);
+  background: rgba(38, 125, 123, 0.075);
+  color: #b9ddda;
+  font-size: 15px;
+  font-weight: 650;
+  text-align: left;
+}
+
+.invitation-form > button i {
+  color: rgba(85, 215, 208, 0.72);
+  font-family: Arial, sans-serif;
+  font-size: 22px;
+  font-style: normal;
+  font-weight: 300;
+  line-height: 1;
+}
+
+.invitation-form > button:hover:not(:disabled) {
+  border-color: rgba(85, 215, 208, 0.64);
+  background: rgba(52, 167, 164, 0.12);
+}
+
+.invitation-result:not(.invitation-result-idle) {
+  margin-top: 22px;
+}
+
+.invitation-confirmed-title small,
+.invitation-open-button small {
+  display: none;
+}
+
+.invitation-open-button {
+  justify-content: center;
+}
+
+.invitation-unlock-status {
+  width: min(calc(100% - 56px), 360px);
+  min-height: 108px;
+  border-color: rgba(85, 215, 208, 0.42);
+  background: rgba(5, 14, 20, 0.96);
+  box-shadow: 0 0 24px rgba(0, 0, 0, 0.24);
+}
+
+.invitation-unlock-status p {
+  margin-top: 9px !important;
+}
+
 .wedding-invitation {
   position: relative;
   min-height: 100svh;
@@ -2096,45 +2417,50 @@ input:focus-visible {
     padding-inline: 16px;
   }
 
-  .invitation-data-card,
-  .invitation-authorization {
-    padding-inline: 12px;
+  .invitation-minimal-shell {
+    padding-inline: 14px;
   }
 
   .invitation-data-value {
-    font-size: 15px;
+    font-size: 20px;
   }
 
   .invitation-data-subvalue {
-    font-size: 13px;
+    font-size: 14px;
   }
 }
 
 @media (max-height: 720px) {
-  .invitation-details {
-    margin-top: 11px;
+  .invitation-access {
+    padding-block: max(18px, env(safe-area-inset-top)) max(18px, env(safe-area-inset-bottom));
   }
 
-  .invitation-data-card {
-    min-height: 104px;
-    padding-block: 11px;
+  .invitation-minimal-shell {
+    padding-block: 22px;
+  }
+
+  .invitation-minimal-marker {
+    margin-bottom: 25px;
+  }
+
+  .invitation-details {
+    margin-top: 0;
   }
 
   .invitation-data-value {
-    margin-top: 10px !important;
+    margin-top: 7px !important;
+  }
+
+  .invitation-technical-divider {
+    margin-block: 20px;
   }
 
   .invitation-authorization {
-    margin-top: 12px;
-    padding-block: 13px;
-  }
-
-  .invitation-auth-description {
-    margin-top: 12px !important;
+    margin-top: 48px;
   }
 
   .invitation-form {
-    margin-top: 16px;
+    margin-top: 14px;
   }
 }
 
