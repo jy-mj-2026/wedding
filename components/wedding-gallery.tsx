@@ -53,14 +53,22 @@ function GalleryImage({ image, lightbox = false }: { image: GalleryImageData; li
   useEffect(() => {
     const element = imageRef.current;
     if (!element) return;
+    let isCurrent = true;
 
-    const handleLoad = () => {
-      if (element.naturalWidth > 0) setIsLoaded(true);
+    const revealDecodedImage = async () => {
+      try {
+        await element.decode();
+      } catch {
+        // Some browsers reject decode() for an already decoded cached image.
+      }
+
+      if (isCurrent && element.naturalWidth > 0) setIsLoaded(true);
     };
+    const handleLoad = () => { void revealDecodedImage(); };
     const handleError = () => setHasFailed(true);
 
     if (element.complete) {
-      if (element.naturalWidth > 0) handleLoad();
+      if (element.naturalWidth > 0) void revealDecodedImage();
       else handleError();
     } else {
       element.addEventListener("load", handleLoad);
@@ -68,6 +76,7 @@ function GalleryImage({ image, lightbox = false }: { image: GalleryImageData; li
     }
 
     return () => {
+      isCurrent = false;
       element.removeEventListener("load", handleLoad);
       element.removeEventListener("error", handleError);
     };
@@ -96,7 +105,6 @@ function GalleryImage({ image, lightbox = false }: { image: GalleryImageData; li
           draggable={false}
           onContextMenu={(event) => event.preventDefault()}
           onDragStart={(event) => event.preventDefault()}
-          onLoad={() => setIsLoaded(true)}
           onError={() => setHasFailed(true)}
         />
       )}
@@ -290,6 +298,19 @@ export function WeddingGallery() {
   }
 
   function moveLightbox(direction: -1 | 1) {
+    lightboxPointersRef.current.clear();
+    lightboxGestureRef.current = null;
+    lightboxHadPinchRef.current = false;
+    lightboxLastTapRef.current = null;
+    lightboxGeometryRef.current = null;
+    lightboxTransformRef.current = { scale: 1, x: 0, y: 0 };
+
+    const element = lightboxTransformElementRef.current;
+    if (element) {
+      element.style.transition = "none";
+      element.style.transform = "translate3d(0, 0, 0) scale(1)";
+    }
+
     setActiveIndex((current) => current === null
       ? null
       : Math.max(0, Math.min(images.length - 1, current + direction)));

@@ -17,6 +17,7 @@ function preloadGalleryImages() {
     image.decoding = "async";
     image.fetchPriority = "low";
     image.src = src;
+    void image.decode().catch(() => undefined);
     galleryPreloadCache.set(src, image);
   });
 }
@@ -142,7 +143,6 @@ export function WeddingInvitation() {
 
       {weddingData.invitationMessage && (
         <section className="wedding-section wedding-message" aria-label="초대 문구">
-          <p className="wedding-section-code wedding-message-label">INVITATION</p>
           <div className="wedding-message-content">
             {weddingData.invitationMessage.split("\n\n").map((paragraph) => (
               <p key={paragraph}>{paragraph}</p>

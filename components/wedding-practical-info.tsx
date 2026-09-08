@@ -199,7 +199,7 @@ export function WeddingPracticalInfo() {
         <div className="wedding-account-accordions">
           {(["groom", "bride"] as const).map((side) => {
             const isOpen = openAccountSide === side;
-            const sideLabel = side === "groom" ? "신랑측" : "신부측";
+            const sideLabel = side === "groom" ? "신랑 측" : "신부 측";
             const contentId = `${side}-accounts`;
 
             return (
@@ -210,7 +210,7 @@ export function WeddingPracticalInfo() {
                   aria-controls={contentId}
                   onClick={() => toggleAccounts(side)}
                 >
-                  <span>{sideLabel} 계좌 보기</span>
+                  <span>{sideLabel}</span>
                   <i aria-hidden="true" />
                 </button>
 
