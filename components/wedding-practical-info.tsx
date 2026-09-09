@@ -140,49 +140,56 @@ export function WeddingPracticalInfo() {
         </div>
 
         <div className="wedding-arrival-guide">
-          <div className="wedding-arrival-primary">
-            <strong>{weddingData.transportation.subway.route}</strong>
-            <dl>
-              {weddingData.transportation.subway.details.map((detail) => (
-                <div key={detail.label}><dt>{detail.label}</dt><dd>{detail.value}</dd></div>
-              ))}
-            </dl>
+          <div className="wedding-transport-group">
+            <p className="wedding-transport-label">{weddingData.transportation.subway.title}</p>
+            <div className="wedding-transport-body">
+              <strong className="wedding-transport-primary">{weddingData.transportation.subway.route}</strong>
+              <dl className="wedding-transport-secondary">
+                {weddingData.transportation.subway.details.map((detail) => (
+                  <div key={detail.label}><dt>{detail.label}</dt><dd>{detail.value}</dd></div>
+                ))}
+              </dl>
+            </div>
           </div>
 
-          <p className="wedding-arrival-car">
-            <span>{weddingData.transportation.car.title}</span>
-            {weddingData.transportation.car.description}
-          </p>
-
-          <div className="wedding-arrival-parking">
-            <strong>{weddingData.transportation.parking.benefit}</strong>
-            <p>{weddingData.transportation.parking.description}</p>
+          <div className="wedding-transport-group">
+            <p className="wedding-transport-label">{weddingData.transportation.car.title}</p>
+            <div className="wedding-transport-body">
+              <strong className="wedding-transport-primary">{weddingData.transportation.parking.benefit}</strong>
+              <p className="wedding-transport-secondary">{weddingData.transportation.parking.description}</p>
+            </div>
           </div>
 
-          <div className={`wedding-bus-accordion ${isBusOpen ? "is-open" : ""}`}>
-            <button
-              type="button"
-              aria-expanded={isBusOpen}
-              aria-controls="wedding-bus-routes"
-              onClick={() => setIsBusOpen((current) => !current)}
-            >
-              <span>버스 노선 보기</span>
-              <i aria-hidden="true" />
-            </button>
+          <div className="wedding-transport-group">
+            <p className="wedding-transport-label">{weddingData.transportation.bus.title}</p>
+            <div className="wedding-transport-body wedding-transport-body--action">
+              <strong className="wedding-transport-primary">{weddingData.transportation.bus.stop}</strong>
 
-            {isBusOpen && (
-              <div id="wedding-bus-routes" className="wedding-bus-panel">
-                <strong>{weddingData.transportation.bus.stop}</strong>
-                <div className="wedding-bus-routes">
-                  {weddingData.transportation.bus.routes.map((route) => (
-                    <div key={route.label}>
-                      <span>{route.label}</span>
-                      <p>{route.numbers.join(", ")}</p>
-                    </div>
-                  ))}
+              <div className={`wedding-bus-accordion wedding-transport-action ${isBusOpen ? "is-open" : ""}`}>
+              <button
+                type="button"
+                aria-expanded={isBusOpen}
+                aria-controls="wedding-bus-routes"
+                onClick={() => setIsBusOpen((current) => !current)}
+              >
+                <span>버스 노선 보기</span>
+                <i aria-hidden="true" />
+              </button>
+
+              {isBusOpen && (
+                <div id="wedding-bus-routes" className="wedding-bus-panel">
+                  <div className="wedding-bus-routes">
+                    {weddingData.transportation.bus.routes.map((route) => (
+                      <div key={route.label}>
+                        <span>{route.label}</span>
+                        <p>{route.numbers.join(", ")}</p>
+                      </div>
+                    ))}
+                  </div>
                 </div>
+              )}
               </div>
-            )}
+            </div>
           </div>
         </div>
       </section>

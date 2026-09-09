@@ -90,10 +90,8 @@ export const weddingData = {
     },
     car: {
       title: "자가용",
-      description: "'성균관컨벤션웨딩홀'을 검색해 주세요.",
     },
     parking: {
-      title: "주차 안내",
       benefit: "2시간 무료 주차",
       description: "정문 안 주차팀의 안내를 따라 이용해 주세요.",
     },

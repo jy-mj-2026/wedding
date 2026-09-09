@@ -2090,11 +2090,37 @@ body.is-wedding-lightbox-open .wedding-bgm {
   border-top: 1px solid rgba(64, 72, 74, 0.12);
 }
 
-.wedding-arrival-primary {
-  padding: 25px 2px 22px;
+.wedding-transport-group {
+  display: flex;
+  flex-direction: column;
+  gap: 11px;
+  padding: 31px 2px;
 }
 
-.wedding-arrival-primary > strong {
+.wedding-transport-group + .wedding-transport-group {
+  border-top: 1px solid rgba(64, 72, 74, 0.07);
+}
+
+.wedding-transport-label {
+  margin: 0;
+  color: #4b8d8a;
+  font-size: 13px;
+  font-weight: 600;
+  line-height: 1.4;
+  letter-spacing: 0;
+}
+
+.wedding-transport-body {
+  display: flex;
+  flex-direction: column;
+  gap: 17px;
+}
+
+.wedding-transport-body--action {
+  gap: 9px;
+}
+
+.wedding-transport-primary {
   display: block;
   color: #293133;
   font-size: 17px;
@@ -2103,77 +2129,47 @@ body.is-wedding-lightbox-open .wedding-bgm {
   letter-spacing: -0.035em;
 }
 
-.wedding-arrival-primary dl {
-  display: grid;
-  gap: 7px;
-  margin: 13px 0 0;
+.wedding-transport-secondary {
+  margin: 0;
+  color: #596365;
+  font-size: 14px;
+  font-weight: 400;
+  line-height: 1.65;
+  letter-spacing: 0;
 }
 
-.wedding-arrival-primary dl div,
+dl.wedding-transport-secondary {
+  display: grid;
+  gap: 10px;
+}
+
+.wedding-transport-secondary div,
 .wedding-bus-routes > div {
   display: grid;
   grid-template-columns: 66px minmax(0, 1fr);
   gap: 8px;
 }
 
-.wedding-arrival-primary dt,
+.wedding-transport-secondary dt,
 .wedding-bus-routes span {
   color: #788281;
   font-size: 13px;
   font-weight: 600;
 }
 
-.wedding-arrival-primary dd,
+.wedding-transport-secondary dd,
 .wedding-bus-routes p {
   min-width: 0;
   margin: 0;
-  color: #424b4c;
+  color: #596365;
   font-size: 14px;
-  line-height: 1.6;
+  line-height: 1.65;
+  letter-spacing: 0;
   overflow-wrap: anywhere;
 }
 
-.wedding-arrival-car {
-  display: grid;
-  grid-template-columns: 66px minmax(0, 1fr);
-  gap: 8px;
-  padding: 19px 2px;
-  border-top: 1px solid rgba(64, 72, 74, 0.1);
-  color: #596365;
-  font-size: 14px;
-  line-height: 1.65;
-  letter-spacing: -0.025em;
-}
-
-.wedding-arrival-car span {
-  color: #788281;
-  font-size: 13px;
-  font-weight: 600;
-}
-
-.wedding-arrival-parking {
-  padding: 20px 2px;
-  border-top: 1px solid rgba(64, 72, 74, 0.1);
-}
-
-.wedding-arrival-parking strong {
-  display: block;
-  color: #28716e;
-  font-size: 17px;
-  font-weight: 750;
-  letter-spacing: -0.035em;
-}
-
-.wedding-arrival-parking p {
-  margin-top: 7px;
-  color: #596365;
-  font-size: 14px;
-  line-height: 1.65;
-  letter-spacing: -0.025em;
-}
-
-.wedding-bus-accordion {
-  border-top: 1px solid rgba(64, 72, 74, 0.1);
+.wedding-transport-action {
+  margin-top: 0;
   border-bottom: 1px solid rgba(64, 72, 74, 0.12);
 }
 
@@ -2186,10 +2182,10 @@ body.is-wedding-lightbox-open .wedding-bgm {
   padding: 0 3px;
   border: 0;
   background: transparent;
-  color: #394547;
+  color: #596365;
   cursor: pointer;
-  font-size: 15px;
-  font-weight: 650;
+  font-size: 12px;
+  font-weight: 400;
   text-align: left;
 }
 
@@ -2232,18 +2228,10 @@ body.is-wedding-lightbox-open .wedding-bgm {
   animation: wedding-account-panel-in 190ms ease-out both;
 }
 
-.wedding-bus-panel > strong {
-  display: block;
-  color: #333c3e;
-  font-size: 15px;
-  font-weight: 650;
-  line-height: 1.55;
-}
-
 .wedding-bus-routes {
   display: grid;
   gap: 9px;
-  margin-top: 14px;
+  margin-top: 0;
 }
 
 .wedding-accounts-notice {
