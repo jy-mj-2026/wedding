@@ -234,6 +234,7 @@ export function WeddingGallery() {
     };
 
     invitation?.setAttribute("inert", "");
+    body.classList.add("is-wedding-lightbox-open");
     body.style.overflow = "hidden";
     body.style.position = "fixed";
     body.style.top = `-${scrollPosition}px`;
@@ -243,6 +244,7 @@ export function WeddingGallery() {
     return () => {
       cancelAnimationFrame(frame);
       invitation?.removeAttribute("inert");
+      body.classList.remove("is-wedding-lightbox-open");
       body.style.overflow = previousStyles.overflow;
       body.style.position = previousStyles.position;
       body.style.top = previousStyles.top;

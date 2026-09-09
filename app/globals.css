@@ -1879,6 +1879,76 @@ input:focus-visible {
   outline-offset: 3px;
 }
 
+.wedding-bgm {
+  position: fixed;
+  z-index: 40;
+  top: max(10px, calc(env(safe-area-inset-top) + 6px));
+  right: max(10px, calc(env(safe-area-inset-right) + 6px));
+  width: 48px;
+  height: 48px;
+  transition: opacity 120ms ease, visibility 120ms ease;
+}
+
+body.is-wedding-lightbox-open .wedding-bgm {
+  visibility: hidden;
+  pointer-events: none;
+  opacity: 0;
+}
+
+.wedding-bgm button {
+  appearance: none;
+  -webkit-appearance: none;
+  display: grid;
+  width: 48px;
+  height: 48px;
+  place-items: center;
+  padding: 0;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  color: rgba(233, 240, 239, 0.88);
+  box-shadow: none;
+  cursor: pointer;
+  filter: drop-shadow(0 1px 2px rgba(3, 7, 10, 0.42));
+  -webkit-tap-highlight-color: transparent;
+  transition: color 160ms ease, opacity 160ms ease;
+}
+
+.wedding-bgm button svg {
+  width: 19px;
+  height: 19px;
+  overflow: visible;
+}
+
+.wedding-bgm-speaker {
+  fill: currentColor;
+}
+
+.wedding-bgm-wave,
+.wedding-bgm-muted {
+  fill: none;
+  stroke: currentColor;
+  stroke-linecap: round;
+  stroke-width: 1.45;
+}
+
+.wedding-bgm button.is-playing {
+  color: rgba(111, 216, 210, 0.9);
+}
+
+.wedding-bgm button:hover {
+  opacity: 0.72;
+}
+
+.wedding-bgm button:active {
+  opacity: 0.52;
+}
+
+.wedding-bgm button:focus-visible {
+  outline: 2px solid rgba(43, 153, 148, 0.75);
+  outline-offset: -5px;
+}
+
 .wedding-location-address {
   margin-top: 0;
   text-align: center;

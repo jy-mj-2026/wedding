@@ -2,6 +2,7 @@
 
 import { type FormEvent, useEffect, useRef, useState } from "react";
 import { weddingData } from "@/data/wedding";
+import { BackgroundMusic, type BackgroundMusicHandle } from "@/components/background-music";
 import { WeddingInvitation } from "@/components/wedding-invitation";
 import { lookupGuest } from "@/lib/guest-api";
 
@@ -18,6 +19,7 @@ export function InvitationExperience() {
   const [isInvitationOpen, setIsInvitationOpen] = useState(false);
   const requestControllerRef = useRef<AbortController | null>(null);
   const openingTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const backgroundMusicRef = useRef<BackgroundMusicHandle | null>(null);
 
   useEffect(() => {
     return () => {
@@ -78,6 +80,8 @@ export function InvitationExperience() {
   function openInvitation() {
     if (isUnlocking || isInvitationOpen) return;
 
+    void backgroundMusicRef.current?.play();
+
     const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
     if (reduceMotion) {
       window.scrollTo({ top: 0, behavior: "auto" });
@@ -95,14 +99,21 @@ export function InvitationExperience() {
   const isChecking = status === "checking";
 
   if (isInvitationOpen) {
-    return <WeddingInvitation />;
+    return (
+      <>
+        <BackgroundMusic ref={backgroundMusicRef} isVisible />
+        <WeddingInvitation />
+      </>
+    );
   }
 
   return (
-    <section
-      className={`invitation-access ${isUnlocking ? "is-unlocking" : ""}`}
-      aria-label="모바일 청첩장 하객 확인"
-    >
+    <>
+      <BackgroundMusic ref={backgroundMusicRef} isVisible={false} />
+      <section
+        className={`invitation-access ${isUnlocking ? "is-unlocking" : ""}`}
+        aria-label="모바일 청첩장 하객 확인"
+      >
       <div className="invitation-orbit invitation-orbit-one" aria-hidden="true" />
       <div className="invitation-orbit invitation-orbit-two" aria-hidden="true" />
 
@@ -209,6 +220,7 @@ export function InvitationExperience() {
           </div>
         </section>
       </div>
-    </section>
+      </section>
+    </>
   );
 }
