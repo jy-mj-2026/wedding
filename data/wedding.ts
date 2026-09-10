@@ -75,7 +75,7 @@ export const weddingData = {
       title: "지하철",
       route: "4호선 혜화역 4번 출구",
       details: [
-        { label: "셔틀버스", value: "T스토어 앞 · 7~10분 간격" },
+        { label: "셔틀버스", value: "T스토어 앞 · 7~10분 간격 수시 운행" },
         { label: "도보", value: "약 8~10분" },
       ],
     },

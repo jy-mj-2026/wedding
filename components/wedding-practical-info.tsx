@@ -93,7 +93,13 @@ export function WeddingPracticalInfo() {
         </div>
 
         <div className="wedding-location-address">
-          <strong>{weddingData.venue}</strong>
+          <div className="wedding-location-venue">
+            <span className="wedding-location-venue-primary">
+              <strong>{weddingData.venue}</strong>
+              <i aria-hidden="true">·</i>
+            </span>
+            <span className="wedding-location-hall">{weddingData.hall}</span>
+          </div>
           <p>{weddingData.location.address}<br /><span>{weddingData.location.lotAddress}</span></p>
         </div>
 

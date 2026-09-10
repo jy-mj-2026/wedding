@@ -1335,8 +1335,7 @@ input:focus-visible {
   text-align: center;
 }
 
-.wedding-section-heading h2,
-.wedding-calendar-heading h2 {
+.wedding-section-heading h2 {
   margin-top: 10px;
   color: #202629;
   font-size: 23px;
@@ -1414,18 +1413,14 @@ input:focus-visible {
 
 .wedding-information-grid {
   display: grid;
-  margin-top: 42px;
+  margin-top: 50px;
   border-block: 1px solid rgba(64, 72, 74, 0.12);
 }
 
 .wedding-information-grid > div {
   position: relative;
-  padding: 22px 8px;
+  padding: 40px 8px 22px;
   text-align: center;
-}
-
-.wedding-information-grid > div + div {
-  border-top: 1px solid rgba(64, 72, 74, 0.1);
 }
 
 .wedding-information-grid small {
@@ -1436,6 +1431,29 @@ input:focus-visible {
   font-size: 7px;
   font-weight: 600;
   letter-spacing: 0.16em;
+}
+
+.wedding-date-calendar > small {
+  margin-bottom: 14px;
+}
+
+.wedding-information-grid .wedding-date-time-line {
+  display: flex;
+  align-items: baseline;
+  justify-content: center;
+  gap: 6px;
+  white-space: nowrap;
+}
+
+.wedding-date-time-clock {
+  color: #5d6668;
+  font-size: 15px;
+  font-weight: 400;
+}
+
+.wedding-date-time-clock i {
+  margin-right: 6px;
+  font-style: normal;
 }
 
 .wedding-information-grid strong {
@@ -1454,35 +1472,13 @@ input:focus-visible {
   line-height: 1.5;
 }
 
-.wedding-calendar-heading {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
 .wedding-calendar {
-  margin-top: 42px;
-  padding-top: 38px;
-}
-
-.wedding-calendar-heading h2 {
-  display: flex;
-  align-items: baseline;
-  gap: 8px;
-  font-size: 29px;
-  margin-top: 0;
-}
-
-.wedding-calendar-heading h2 span {
-  color: #667072;
-  font-size: 13px;
-  font-weight: 600;
-  letter-spacing: 0.06em;
+  margin-top: 32px;
 }
 
 .wedding-calendar table {
   width: 100%;
-  margin-top: 25px;
+  margin-top: 0;
   border-collapse: collapse;
   table-layout: fixed;
 }
@@ -1960,11 +1956,40 @@ body.is-wedding-lightbox-open .wedding-bgm {
 }
 
 .wedding-location-address strong {
-  display: block;
   color: #22292b;
   font-size: 20px;
   font-weight: 700;
   letter-spacing: -0.045em;
+}
+
+.wedding-location-venue {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  justify-content: center;
+  column-gap: 6px;
+  row-gap: 4px;
+}
+
+.wedding-location-venue-primary {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 6px;
+  white-space: nowrap;
+}
+
+.wedding-location-venue-primary i {
+  color: #86908f;
+  font-size: 15px;
+  font-style: normal;
+  font-weight: 400;
+}
+
+.wedding-location-hall {
+  color: #687273;
+  font-size: 15px;
+  font-weight: 500;
+  letter-spacing: -0.025em;
 }
 
 .wedding-location-address p {
@@ -1975,7 +2000,7 @@ body.is-wedding-lightbox-open .wedding-bgm {
   letter-spacing: -0.025em;
 }
 
-.wedding-location-address span {
+.wedding-location-address p > span {
   color: #768080;
   font-size: 14px;
 }
@@ -2493,6 +2518,14 @@ dl.wedding-transport-secondary {
 }
 
 @media (max-width: 370px) {
+  .wedding-information-grid .wedding-date-time-line {
+    font-size: 17px;
+  }
+
+  .wedding-date-time-clock {
+    font-size: 14px;
+  }
+
   .invitation-access {
     padding-inline: 16px;
   }

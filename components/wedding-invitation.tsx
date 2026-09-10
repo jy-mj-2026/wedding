@@ -165,51 +165,44 @@ export function WeddingInvitation() {
         </div>
 
         <div className="wedding-information-grid">
-          <div>
+          <div className="wedding-date-calendar">
             <small>DATE / TIME</small>
-            <strong>{year}년 {month}월 {weddingDay}일 {weddingData.weekday}</strong>
-            <p>{weddingData.time}</p>
-          </div>
-          <div>
-            <small>VENUE</small>
-            <strong>{weddingData.venue}</strong>
-            <p>{weddingData.hall}</p>
-          </div>
-        </div>
+            <strong className="wedding-date-time-line">
+              <span>{year}년 {month}월 {weddingDay}일</span>
+              <span className="wedding-date-time-clock"><i aria-hidden="true">·</i>{weddingData.weekday} {weddingData.time}</span>
+            </strong>
 
-        <div className="wedding-calendar">
-          <div className="wedding-calendar-heading">
-            <h2 id="calendar-title"><span>{year}</span>{month}월</h2>
+            <div className="wedding-calendar">
+              <table>
+                <caption>{year}년 {month}월 달력, {weddingDay}일 예식</caption>
+                <thead>
+                  <tr>
+                    {weekdays.map((weekday) => <th key={weekday} scope="col">{weekday}</th>)}
+                  </tr>
+                </thead>
+                <tbody>
+                  {Array.from({ length: Math.ceil(calendarDays.length / 7) }, (_, weekIndex) => (
+                    <tr key={weekIndex}>
+                      {Array.from({ length: 7 }, (_, weekdayIndex) => {
+                        const date = calendarDays[weekIndex * 7 + weekdayIndex] ?? null;
+                        const isWeddingDay = date === weddingDay;
+
+                        return (
+                          <td key={weekdayIndex} className={isWeddingDay ? "is-wedding-day" : undefined}>
+                            {date && (
+                              <span aria-label={isWeddingDay ? `${date}일, 결혼식 날` : undefined}>
+                                {date}
+                              </span>
+                            )}
+                          </td>
+                        );
+                      })}
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
           </div>
-
-          <table aria-labelledby="calendar-title">
-            <caption>{year}년 {month}월 달력, {weddingDay}일 예식</caption>
-            <thead>
-              <tr>
-                {weekdays.map((weekday) => <th key={weekday} scope="col">{weekday}</th>)}
-              </tr>
-            </thead>
-            <tbody>
-              {Array.from({ length: Math.ceil(calendarDays.length / 7) }, (_, weekIndex) => (
-                <tr key={weekIndex}>
-                  {Array.from({ length: 7 }, (_, weekdayIndex) => {
-                    const date = calendarDays[weekIndex * 7 + weekdayIndex] ?? null;
-                    const isWeddingDay = date === weddingDay;
-
-                    return (
-                      <td key={weekdayIndex} className={isWeddingDay ? "is-wedding-day" : undefined}>
-                        {date && (
-                          <span aria-label={isWeddingDay ? `${date}일, 결혼식 날` : undefined}>
-                            {date}
-                          </span>
-                        )}
-                      </td>
-                    );
-                  })}
-                </tr>
-              ))}
-            </tbody>
-          </table>
         </div>
       </section>
 
