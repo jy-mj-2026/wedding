@@ -217,7 +217,7 @@ export function WeddingInvitation() {
       <footer className="wedding-document-footer" aria-hidden="true">
         <small>DOCUMENT END</small>
         <strong>{weddingData.groomName} · {weddingData.brideName}</strong>
-        <span>{weddingData.date}</span>
+        <span>{weddingData.missionCode}</span>
       </footer>
     </article>
   );
