@@ -804,7 +804,7 @@ input:focus-visible {
   align-items: center;
   justify-content: center;
   gap: 7px;
-  margin: 0 auto 38px;
+  margin: 0 auto 28px;
 }
 
 .invitation-minimal-marker i {
@@ -844,7 +844,7 @@ input:focus-visible {
 }
 
 .invitation-data-value {
-  margin-top: 10px !important;
+  margin-top: 19px !important;
   color: #edf3f2;
   font-size: clamp(20px, 5.5vw, 23px);
   font-weight: 640;
@@ -853,7 +853,7 @@ input:focus-visible {
 }
 
 .invitation-data-subvalue {
-  margin-top: 5px !important;
+  margin-top: 11px !important;
   color: #94a5a3;
   font-size: 15px;
   font-weight: 430;
@@ -865,7 +865,7 @@ input:focus-visible {
   position: relative;
   width: 58px;
   height: 1px;
-  margin: 27px auto;
+  margin: 30px auto;
   background: rgba(153, 170, 169, 0.2);
 }
 
@@ -931,7 +931,7 @@ input:focus-visible {
 }
 
 .invitation-action-prompt {
-  margin-top: 18px !important;
+  margin-top: 30px !important;
   color: #c7d1d0;
   font-size: 15px;
   font-weight: 450;
