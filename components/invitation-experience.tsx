@@ -13,6 +13,7 @@ type IdentifiedGuest =
   | { name: string; type: "fallback"; greeting: FallbackGreeting };
 
 const minimumCheckingDuration = 450;
+const guestSessionCache = new Map<string, IdentifiedGuest>();
 
 const FALLBACK_FIRST_LINES = [
   "이 초대가 닿아 기쁩니다.",
@@ -51,6 +52,7 @@ export function InvitationExperience() {
   const [isUnlocking, setIsUnlocking] = useState(false);
   const [isInvitationOpen, setIsInvitationOpen] = useState(false);
   const requestControllerRef = useRef<AbortController | null>(null);
+  const lookupInProgressRef = useRef(false);
   const openingTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const backgroundMusicRef = useRef<BackgroundMusicHandle | null>(null);
 
@@ -74,8 +76,9 @@ export function InvitationExperience() {
   async function verifyGuest(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     const trimmedName = name.trim();
-    if (!trimmedName || status === "checking" || requestControllerRef.current) return;
+    if (!trimmedName || status === "checking" || lookupInProgressRef.current) return;
 
+    lookupInProgressRef.current = true;
     setStatus("checking");
     setGuest(null);
 
@@ -86,18 +89,34 @@ export function InvitationExperience() {
     );
 
     try {
+      const cachedGuest = guestSessionCache.get(trimmedName);
+
+      if (cachedGuest) {
+        setGuest(cachedGuest);
+        await minimumCheckingTime;
+        setStatus("confirmed");
+        return;
+      }
+
       const result = await lookupGuest(trimmedName, controller.signal);
+      let identifiedGuest: IdentifiedGuest;
 
       if (result.found) {
-        setGuest({ name: trimmedName, type: "registered", message: result.message });
+        identifiedGuest = {
+          name: trimmedName,
+          type: "registered",
+          message: result.message,
+        };
       } else {
-        setGuest({
+        identifiedGuest = {
           name: trimmedName,
           type: "fallback",
           greeting: createFallbackGreeting(),
-        });
+        };
       }
 
+      guestSessionCache.set(trimmedName, identifiedGuest);
+      setGuest(identifiedGuest);
       await minimumCheckingTime;
       setStatus("confirmed");
     } catch {
@@ -105,6 +124,7 @@ export function InvitationExperience() {
       setStatus("request-error");
     } finally {
       if (requestControllerRef.current === controller) requestControllerRef.current = null;
+      lookupInProgressRef.current = false;
     }
   }
 

@@ -1,9 +1,9 @@
 export const guestApiUrl =
   "https://script.google.com/macros/s/AKfycbwXo4pXPtkzZAbf3_u045bbZzjwdUJpJ-QK3t82Fm-RHpuUte7xzyBILg32adNctXDzhQ/exec";
 
-const maxRequestAttempts = 3;
+const maxRequestAttempts = 2;
 const requestTimeoutMs = 9000;
-const retryDelaysMs = [700, 1500] as const;
+const retryDelaysMs = [700] as const;
 
 export type GuestLookupResult =
   | { found: true; message: string }
@@ -81,7 +81,13 @@ async function requestGuest(name: string, signal: AbortSignal): Promise<GuestLoo
       throw new Error(`Guest API returned HTTP ${response.status}`);
     }
 
-    const data = (await response.json()) as GuestApiResponse;
+    let data: GuestApiResponse;
+
+    try {
+      data = (await response.json()) as GuestApiResponse;
+    } catch {
+      throw new RetryableGuestApiError("Guest API returned invalid JSON");
+    }
 
     if (typeof data !== "object" || data === null || typeof data.found !== "boolean") {
       throw new Error("Guest API returned an invalid response");
