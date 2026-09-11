@@ -598,6 +598,10 @@ input:focus-visible {
   letter-spacing: -0.03em;
 }
 
+.invitation-guest-message > span {
+  display: block;
+}
+
 .invitation-open-button {
   display: flex;
   align-items: center;
@@ -766,6 +770,7 @@ input:focus-visible {
   max-width: 372px;
   flex: 0 0 auto;
   margin-block: auto;
+  margin-inline: auto;
   padding: 30px 18px 28px;
   animation: invitation-enter 0.55s ease-out both;
 }

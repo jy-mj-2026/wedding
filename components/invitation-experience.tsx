@@ -6,10 +6,43 @@ import { BackgroundMusic, type BackgroundMusicHandle } from "@/components/backgr
 import { WeddingInvitation } from "@/components/wedding-invitation";
 import { lookupGuest } from "@/lib/guest-api";
 
-type AuthorizationState = "idle" | "checking" | "confirmed" | "not-found" | "request-error";
-type IdentifiedGuest = { name: string; message: string };
+type AuthorizationState = "idle" | "checking" | "confirmed" | "request-error";
+type FallbackGreeting = { firstLine: string; secondLine: string };
+type IdentifiedGuest =
+  | { name: string; type: "registered"; message: string }
+  | { name: string; type: "fallback"; greeting: FallbackGreeting };
 
 const minimumCheckingDuration = 450;
+
+const FALLBACK_FIRST_LINES = [
+  "이 초대가 닿아 기쁩니다.",
+  "반가운 이름을 확인했습니다.",
+  "좋은 소식을 전할 수 있어 기쁩니다.",
+  "저희에게 소중한 순간이 찾아왔습니다.",
+  "설레는 마음으로 인사드립니다.",
+  "저희의 기쁜 소식을 전합니다.",
+] as const;
+
+const FALLBACK_SECOND_LINES = [
+  "저희 두 사람의 첫걸음을 함께해 주세요.",
+  "좋은 날, 함께해 주시면 더없이 기쁘겠습니다.",
+  "새로운 시작을 함께 축복해 주세요.",
+  "저희의 새로운 시작에 모시고 싶습니다.",
+] as const;
+
+function createFallbackGreeting(): FallbackGreeting {
+  const firstLine = FALLBACK_FIRST_LINES[
+    Math.floor(Math.random() * FALLBACK_FIRST_LINES.length)
+  ];
+  const secondLine = FALLBACK_SECOND_LINES[
+    Math.floor(Math.random() * FALLBACK_SECOND_LINES.length)
+  ];
+
+  return {
+    firstLine,
+    secondLine,
+  };
+}
 
 export function InvitationExperience() {
   const [name, setName] = useState("");
@@ -41,26 +74,32 @@ export function InvitationExperience() {
   async function verifyGuest(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     const trimmedName = name.trim();
-    if (!trimmedName || status === "checking") return;
+    if (!trimmedName || status === "checking" || requestControllerRef.current) return;
 
     setStatus("checking");
     setGuest(null);
 
     const controller = new AbortController();
     requestControllerRef.current = controller;
+    const minimumCheckingTime = new Promise((resolve) =>
+      setTimeout(resolve, minimumCheckingDuration)
+    );
 
     try {
-      const [result] = await Promise.all([
-        lookupGuest(trimmedName, controller.signal),
-        new Promise((resolve) => setTimeout(resolve, minimumCheckingDuration)),
-      ]);
+      const result = await lookupGuest(trimmedName, controller.signal);
 
       if (result.found) {
-        setGuest({ name: trimmedName, message: result.message });
-        setStatus("confirmed");
+        setGuest({ name: trimmedName, type: "registered", message: result.message });
       } else {
-        setStatus("not-found");
+        setGuest({
+          name: trimmedName,
+          type: "fallback",
+          greeting: createFallbackGreeting(),
+        });
       }
+
+      await minimumCheckingTime;
+      setStatus("confirmed");
     } catch {
       if (controller.signal.aborted) return;
       setStatus("request-error");
@@ -71,7 +110,7 @@ export function InvitationExperience() {
 
   function updateName(value: string) {
     setName(value);
-    if (status === "confirmed" || status === "not-found" || status === "request-error") {
+    if (status === "confirmed" || status === "request-error") {
       setGuest(null);
       setStatus("idle");
     }
@@ -191,8 +230,19 @@ export function InvitationExperience() {
                     <p>초대 손님 확인 완료</p>
                   </div>
                 </div>
-                <p className="invitation-guest-name">{guest.name} <span>님</span></p>
-                <p className="invitation-guest-message">{guest.message}</p>
+                <p className="invitation-guest-name">
+                  {guest.name}{!guest.name.endsWith("님") && <> <span>님</span></>}
+                </p>
+                <p className="invitation-guest-message">
+                  {guest.type === "registered" ? (
+                    guest.message
+                  ) : (
+                    <>
+                      <span>{guest.greeting.firstLine}</span>
+                      <span>{guest.greeting.secondLine}</span>
+                    </>
+                  )}
+                </p>
                 <button
                   type="button"
                   className="invitation-open-button"
@@ -201,13 +251,6 @@ export function InvitationExperience() {
                 >
                   <span>초대장 열기</span>
                 </button>
-              </div>
-            )}
-
-            {status === "not-found" && (
-              <div className="invitation-not-found">
-                <p>성함을 다시 한번 확인해주세요.</p>
-                <small>초대받으신 성함과 동일하게 입력해주세요.</small>
               </div>
             )}
 
