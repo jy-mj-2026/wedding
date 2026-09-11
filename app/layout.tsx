@@ -4,7 +4,7 @@ import "./globals.css";
 
 const metadataBaseUrl = "https://jy-mj-2026.github.io";
 const siteUrl = "https://jy-mj-2026.github.io/wedding/";
-const socialImageUrl = "https://jy-mj-2026.github.io/wedding/images/og/wedding-og-v3.jpg";
+const socialImageUrl = "https://jy-mj-2026.github.io/wedding/images/og/wedding-og-v4.jpg";
 const socialTitle = "최종윤 · 장민정 결혼합니다";
 const socialDescription = "2026.12.19. 토요일 오전 11시 | 성균관컨벤션웨딩홀";
 
