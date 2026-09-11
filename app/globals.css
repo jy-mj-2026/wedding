@@ -1226,19 +1226,6 @@ input:focus-visible {
   aspect-ratio: 4 / 5;
 }
 
-.wedding-main-image::after {
-  position: absolute;
-  z-index: 2;
-  inset: 0;
-  background:
-    linear-gradient(180deg, rgba(5, 12, 18, 0.28), transparent 28%, transparent 72%, rgba(5, 12, 18, 0.32)),
-    linear-gradient(90deg, rgba(85, 215, 208, 0.055) 1px, transparent 1px),
-    linear-gradient(rgba(85, 215, 208, 0.055) 1px, transparent 1px);
-  background-size: auto, 32px 32px, 32px 32px;
-  content: "";
-  pointer-events: none;
-}
-
 .wedding-main-image img {
   position: relative;
   z-index: 1;
