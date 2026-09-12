@@ -2,6 +2,7 @@
 /.next
 /out
 /build
+private/
 .DS_Store
 *.pem
 .env*

@@ -5,6 +5,7 @@
   "scripts": {
     "dev": "next dev",
     "build": "next build",
+    "build:guest-index": "node scripts/build-guest-index.mjs",
     "start": "next start",
     "lint": "eslint . --max-warnings=0"
   },

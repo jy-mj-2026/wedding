@@ -4,7 +4,8 @@ import { type FormEvent, useEffect, useRef, useState } from "react";
 import { weddingData } from "@/data/wedding";
 import { BackgroundMusic, type BackgroundMusicHandle } from "@/components/background-music";
 import { WeddingInvitation } from "@/components/wedding-invitation";
-import { lookupGuest } from "@/lib/guest-api";
+import { lookupGuest, preloadGuestIndex } from "@/lib/guest-index";
+import { normalizeGuestName } from "@/lib/guest-index-crypto";
 
 type AuthorizationState = "idle" | "checking" | "confirmed" | "request-error";
 type FallbackGreeting = { firstLine: string; secondLine: string };
@@ -12,7 +13,6 @@ type IdentifiedGuest =
   | { name: string; type: "registered"; message: string }
   | { name: string; type: "fallback"; greeting: FallbackGreeting };
 
-const minimumCheckingDuration = 450;
 const guestSessionCache = new Map<string, IdentifiedGuest>();
 
 const FALLBACK_FIRST_LINES = [
@@ -51,14 +51,18 @@ export function InvitationExperience() {
   const [guest, setGuest] = useState<IdentifiedGuest | null>(null);
   const [isUnlocking, setIsUnlocking] = useState(false);
   const [isInvitationOpen, setIsInvitationOpen] = useState(false);
-  const requestControllerRef = useRef<AbortController | null>(null);
   const lookupInProgressRef = useRef(false);
+  const lookupSequenceRef = useRef(0);
+  const scanCompletionRef = useRef<{ iterations: number; resolve: () => void } | null>(null);
   const openingTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const backgroundMusicRef = useRef<BackgroundMusicHandle | null>(null);
 
   useEffect(() => {
+    preloadGuestIndex();
     return () => {
-      requestControllerRef.current?.abort();
+      lookupSequenceRef.current += 1;
+      scanCompletionRef.current?.resolve();
+      scanCompletionRef.current = null;
       if (openingTimerRef.current) clearTimeout(openingTimerRef.current);
     };
   }, []);
@@ -78,27 +82,32 @@ export function InvitationExperience() {
     const trimmedName = name.trim();
     if (!trimmedName || status === "checking" || lookupInProgressRef.current) return;
 
+    const lookupKey = normalizeGuestName(trimmedName);
+    const lookupSequence = ++lookupSequenceRef.current;
     lookupInProgressRef.current = true;
     setStatus("checking");
     setGuest(null);
 
-    const controller = new AbortController();
-    requestControllerRef.current = controller;
-    const minimumCheckingTime = new Promise((resolve) =>
-      setTimeout(resolve, minimumCheckingDuration)
-    );
+    const minimumCheckingTime = window.matchMedia("(prefers-reduced-motion: reduce)").matches
+      ? Promise.resolve()
+      : new Promise<void>((resolve) => {
+          scanCompletionRef.current = { iterations: 0, resolve };
+        });
 
     try {
-      const cachedGuest = guestSessionCache.get(trimmedName);
+      const cachedGuest = guestSessionCache.get(lookupKey);
 
       if (cachedGuest) {
-        setGuest(cachedGuest);
+        if (lookupSequence !== lookupSequenceRef.current) return;
+        setGuest({ ...cachedGuest, name: trimmedName });
         await minimumCheckingTime;
+        if (lookupSequence !== lookupSequenceRef.current) return;
         setStatus("confirmed");
         return;
       }
 
-      const result = await lookupGuest(trimmedName, controller.signal);
+      const result = await lookupGuest(trimmedName);
+      if (lookupSequence !== lookupSequenceRef.current) return;
       let identifiedGuest: IdentifiedGuest;
 
       if (result.found) {
@@ -115,16 +124,27 @@ export function InvitationExperience() {
         };
       }
 
-      guestSessionCache.set(trimmedName, identifiedGuest);
+      guestSessionCache.set(lookupKey, identifiedGuest);
       setGuest(identifiedGuest);
       await minimumCheckingTime;
+      if (lookupSequence !== lookupSequenceRef.current) return;
       setStatus("confirmed");
     } catch {
-      if (controller.signal.aborted) return;
+      if (lookupSequence !== lookupSequenceRef.current) return;
       setStatus("request-error");
     } finally {
-      if (requestControllerRef.current === controller) requestControllerRef.current = null;
+      scanCompletionRef.current = null;
       lookupInProgressRef.current = false;
+    }
+  }
+
+  function handleScanIteration() {
+    const scan = scanCompletionRef.current;
+    if (!scan) return;
+    scan.iterations += 1;
+    if (scan.iterations >= 2) {
+      scanCompletionRef.current = null;
+      scan.resolve();
     }
   }
 
@@ -221,7 +241,13 @@ export function InvitationExperience() {
                 autoComplete="name"
                 disabled={isChecking}
               />
-              {isChecking && <span className="invitation-input-scan" aria-hidden="true" />}
+              {isChecking && (
+                <span
+                  className="invitation-input-scan"
+                  aria-hidden="true"
+                  onAnimationIteration={handleScanIteration}
+                />
+              )}
             </div>
             <button type="submit" disabled={isChecking || !name.trim()}>
               <span>{isChecking ? "확인 중" : "확인하기"}</span>
