@@ -1046,7 +1046,6 @@ input:focus-visible {
     #eceeec;
   background-size: 28px 28px, 28px 28px, auto;
   color: #202427;
-  animation: wedding-invitation-screen 0.42s ease-out both;
 }
 
 .wedding-invitation::before {
@@ -2472,11 +2471,6 @@ dl.wedding-transport-secondary {
 @keyframes invitation-unlock-status {
   from { opacity: 0; transform: translate(-50%, calc(-50% + 7px)); }
   to { opacity: 1; transform: translate(-50%, -50%); }
-}
-
-@keyframes wedding-invitation-screen {
-  from { opacity: 0; }
-  to { opacity: 1; }
 }
 
 @keyframes wedding-invitation-reveal {
