@@ -21,7 +21,7 @@ html {
 body {
   min-height: 100%;
   margin: 0;
-  overflow-x: hidden;
+  overflow-x: clip;
   background: var(--site-background);
   color: var(--site-foreground);
   font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Noto Sans KR",
@@ -67,6 +67,14 @@ input:focus-visible {
   overflow-x: clip;
   background: var(--invitation-night);
   box-shadow: 0 0 56px rgba(0, 0, 0, 0.54);
+}
+
+@media (max-width: 480px) {
+  html:has(.wedding-invitation),
+  body:has(.wedding-invitation),
+  .wedding-shell:has(.wedding-invitation) {
+    background-color: #eceeec;
+  }
 }
 
 .invitation-access {
@@ -1082,7 +1090,8 @@ input:focus-visible {
   position: relative;
   isolation: isolate;
   display: grid;
-  min-height: 100svh;
+  height: 100svh;
+  min-height: max-content;
   place-items: center;
   overflow: hidden;
   padding: max(66px, env(safe-area-inset-top)) 24px max(64px, env(safe-area-inset-bottom));
