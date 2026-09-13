@@ -2283,7 +2283,7 @@ dl.wedding-transport-secondary {
   justify-content: space-between;
   gap: 14px;
   padding: 0 14px 0 17px;
-  border: 1px solid rgba(48, 105, 104, 0.2);
+  border: 1px solid rgba(48, 105, 104, 0.15);
   border-radius: 0;
   background: rgba(255, 255, 255, 0.31);
   color: #303a3b;
@@ -2296,85 +2296,124 @@ dl.wedding-transport-secondary {
 
 .wedding-account-accordion > button:hover,
 .wedding-account-accordion.is-open > button {
-  border-color: rgba(45, 128, 125, 0.34);
+  border-color: rgba(45, 128, 125, 0.26);
   background: rgba(255, 255, 255, 0.5);
 }
 
 .wedding-account-accordion > button:focus-visible,
-.wedding-account-row > button:focus-visible {
+.wedding-account-row button:focus-visible {
   outline: 2px solid #347f7c;
   outline-offset: 3px;
 }
 
 .wedding-account-panel {
-  border-inline: 1px solid rgba(48, 105, 104, 0.12);
-  border-bottom: 1px solid rgba(48, 105, 104, 0.12);
+  border-inline: 1px solid rgba(48, 105, 104, 0.09);
+  border-bottom: 1px solid rgba(48, 105, 104, 0.09);
   background: rgba(255, 255, 255, 0.12);
+  font-family: inherit;
   animation: wedding-account-panel-in 190ms ease-out both;
 }
 
 .wedding-account-row {
-  padding: 17px 14px;
+  display: grid;
+  row-gap: 20px;
+  padding: 24px 14px;
 }
 
 .wedding-account-row + .wedding-account-row {
   border-top: 1px solid rgba(48, 105, 104, 0.12);
 }
 
-.wedding-account-person {
-  display: flex;
-  align-items: baseline;
-  gap: 9px;
-}
-
-.wedding-account-person small {
-  color: #65807e;
-  font-size: 12px;
-}
-
-.wedding-account-person strong {
-  color: #252c2e;
-  font-size: 17px;
-  font-weight: 700;
-  letter-spacing: -0.035em;
-}
-
-.wedding-account-detail {
+.wedding-account-identity {
   display: grid;
-  gap: 5px;
-  margin-top: 11px;
+  row-gap: 18px;
 }
 
-.wedding-account-detail span {
-  color: #707a7b;
+.wedding-account-role {
+  display: block;
+  color: #65807e;
   font-size: 13px;
+  font-weight: 600;
+  font-family: inherit;
+  line-height: 1.25;
 }
 
-.wedding-account-detail strong {
-  color: #424b4d;
-  font-size: 16px;
+.wedding-account-number {
+  display: block;
+  width: 100%;
+  min-width: 0;
+  min-height: 25px;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: #252c2e;
+  cursor: pointer;
+  font-family: inherit;
+  font-size: 17px;
   font-weight: 600;
   line-height: 1.45;
   overflow-wrap: anywhere;
+  text-align: left;
 }
 
-.wedding-account-row > button {
-  min-width: 82px;
-  min-height: 44px;
-  margin-top: 13px;
-  padding: 0 12px;
-  border: 1px solid rgba(45, 119, 116, 0.25);
-  border-radius: 0;
-  background: rgba(255, 255, 255, 0.35);
+.wedding-account-meta {
+  position: relative;
+  min-height: 20px;
+  margin: 0;
+  padding-right: 60px;
+}
+
+.wedding-account-meta span {
+  display: block;
+  min-width: 0;
+  color: #5d6668;
+  font-size: 13px;
+  line-height: 20px;
+  overflow-wrap: anywhere;
+}
+
+.wedding-account-copy {
+  position: absolute;
+  top: -12px;
+  right: 4px;
+  min-width: 52px;
+  height: 44px;
+  padding: 12px 4px;
+  border: 0;
+  background: transparent;
   color: #326f6c;
   cursor: pointer;
+  font-family: inherit;
   font-size: 13px;
   font-weight: 650;
+  line-height: 20px;
 }
 
-.wedding-account-row > button:disabled {
-  cursor: default;
-  opacity: 0.48;
+.wedding-copy-toast {
+  position: fixed;
+  z-index: 80;
+  bottom: calc(env(safe-area-inset-bottom) + 24px);
+  left: 50%;
+  width: max-content;
+  max-width: calc(100vw - 40px);
+  padding: 11px 16px;
+  border-radius: 6px;
+  background: rgba(15, 24, 29, 0.9);
+  color: #eef4f3;
+  font-family: inherit;
+  font-size: 13px;
+  line-height: 1.5;
+  pointer-events: none;
+  text-align: center;
+  transform: translateX(-50%);
+  animation: wedding-copy-toast-visibility 1500ms ease both;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .wedding-copy-toast {
+    animation: none;
+  }
 }
 
 .wedding-flower-notice {
@@ -2407,6 +2446,11 @@ dl.wedding-transport-secondary {
 @keyframes wedding-account-panel-in {
   from { opacity: 0; transform: translateY(-4px); }
   to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes wedding-copy-toast-visibility {
+  0%, 100% { opacity: 0; }
+  12%, 82% { opacity: 1; }
 }
 
 .wedding-document-footer {

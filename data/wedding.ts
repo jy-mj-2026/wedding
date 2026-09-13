@@ -99,14 +99,12 @@ export const weddingData = {
   accounts: {
     notice: "멀리서 축하해 주시는 분들을 위해\n작은 안내를 드리는 점 양해 부탁드립니다.",
     groom: [
-      { role: "신랑", name: "최종윤", bank: "", accountNumber: "" },
-      { role: "신랑 아버지", name: "최지현", bank: "", accountNumber: "" },
-      { role: "신랑 어머니", name: "강은주", bank: "", accountNumber: "" },
+      { role: "신랑 아버님", name: "최지현", bank: "신한은행", accountNumber: "110060109763" },
+      { role: "신랑 어머님", name: "강은주", bank: "하나은행", accountNumber: "227-910084-52907" },
+      { role: "신랑", name: "최종윤", bank: "하나은행", accountNumber: "22791042408707" },
     ],
     bride: [
-      { role: "신부", name: "장민정", bank: "신한은행", accountNumber: "" },
-      { role: "신부 아버지", name: "장영근", bank: "", accountNumber: "" },
-      { role: "신부 어머니", name: "손미숙", bank: "", accountNumber: "" },
+      { role: "신부", name: "장민정", bank: "신한은행", accountNumber: "110529781772" },
     ],
   },
   flowerNotice: [
