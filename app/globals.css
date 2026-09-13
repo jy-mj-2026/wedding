@@ -2361,7 +2361,7 @@ dl.wedding-transport-secondary {
   position: relative;
   min-height: 20px;
   margin: 0;
-  padding-right: 60px;
+  padding-right: 80px;
 }
 
 .wedding-account-meta span {
@@ -2377,7 +2377,7 @@ dl.wedding-transport-secondary {
   position: absolute;
   top: -12px;
   right: 4px;
-  min-width: 52px;
+  min-width: 72px;
   height: 44px;
   padding: 12px 4px;
   border: 0;
@@ -2388,32 +2388,7 @@ dl.wedding-transport-secondary {
   font-size: 13px;
   font-weight: 650;
   line-height: 20px;
-}
-
-.wedding-copy-toast {
-  position: fixed;
-  z-index: 80;
-  bottom: calc(env(safe-area-inset-bottom) + 24px);
-  left: 50%;
-  width: max-content;
-  max-width: calc(100vw - 40px);
-  padding: 11px 16px;
-  border-radius: 6px;
-  background: rgba(15, 24, 29, 0.9);
-  color: #eef4f3;
-  font-family: inherit;
-  font-size: 13px;
-  line-height: 1.5;
-  pointer-events: none;
-  text-align: center;
-  transform: translateX(-50%);
-  animation: wedding-copy-toast-visibility 1500ms ease both;
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .wedding-copy-toast {
-    animation: none;
-  }
+  white-space: nowrap;
 }
 
 .wedding-flower-notice {
@@ -2446,11 +2421,6 @@ dl.wedding-transport-secondary {
 @keyframes wedding-account-panel-in {
   from { opacity: 0; transform: translateY(-4px); }
   to { opacity: 1; transform: translateY(0); }
-}
-
-@keyframes wedding-copy-toast-visibility {
-  0%, 100% { opacity: 0; }
-  12%, 82% { opacity: 1; }
 }
 
 .wedding-document-footer {

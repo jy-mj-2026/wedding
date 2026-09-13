@@ -11,25 +11,26 @@ export function WeddingPracticalInfo() {
   const [isMapLoaded, setIsMapLoaded] = useState(false);
   const [isBusOpen, setIsBusOpen] = useState(false);
   const [openAccountSide, setOpenAccountSide] = useState<AccountSide | null>(null);
-  const [copyToast, setCopyToast] = useState<{ id: number; message: string } | null>(null);
-  const copyToastIdRef = useRef(0);
+  const [copiedAccounts, setCopiedAccounts] = useState<Record<string, boolean>>({});
+  const copyResetTimersRef = useRef(new Map<string, ReturnType<typeof setTimeout>>());
+  const copyAttemptRef = useRef(0);
+  const latestCopyAttemptRef = useRef(new Map<string, number>());
   const tmapFallbackTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const tmapVisibilityHandlerRef = useRef<(() => void) | null>(null);
 
   useEffect(() => {
+    const copyResetTimers = copyResetTimersRef.current;
+    const latestCopyAttempts = latestCopyAttemptRef.current;
     return () => {
       if (tmapFallbackTimerRef.current) clearTimeout(tmapFallbackTimerRef.current);
       if (tmapVisibilityHandlerRef.current) {
         document.removeEventListener("visibilitychange", tmapVisibilityHandlerRef.current);
       }
+      for (const timer of copyResetTimers.values()) clearTimeout(timer);
+      copyResetTimers.clear();
+      latestCopyAttempts.clear();
     };
   }, []);
-
-  useEffect(() => {
-    if (!copyToast) return;
-    const timer = setTimeout(() => setCopyToast(null), 1500);
-    return () => clearTimeout(timer);
-  }, [copyToast]);
 
   function openTmap(baseUrl: string) {
     const destination = encodeURIComponent(weddingData.venue);
@@ -71,16 +72,37 @@ export function WeddingPracticalInfo() {
     setOpenAccountSide((current) => current === side ? null : side);
   }
 
-  async function copyAccount(accountNumber: string) {
+  async function copyAccount(accountNumber: string, accountId: string) {
     const digits = accountNumber.replace(/[^0-9]/g, "");
     if (!digits) return;
+    const attempt = ++copyAttemptRef.current;
+    latestCopyAttemptRef.current.set(accountId, attempt);
+    const previousTimer = copyResetTimersRef.current.get(accountId);
+    if (previousTimer) clearTimeout(previousTimer);
+    copyResetTimersRef.current.delete(accountId);
 
     try {
       if (!navigator.clipboard?.writeText) throw new Error("Clipboard API unavailable");
       await navigator.clipboard.writeText(digits);
-      setCopyToast({ id: ++copyToastIdRef.current, message: "계좌번호가 복사되었습니다." });
+      if (latestCopyAttemptRef.current.get(accountId) !== attempt) return;
+      setCopiedAccounts((current) => ({ ...current, [accountId]: true }));
+      const timer = setTimeout(() => {
+        setCopiedAccounts((current) => {
+          const next = { ...current };
+          delete next[accountId];
+          return next;
+        });
+        copyResetTimersRef.current.delete(accountId);
+      }, 1400);
+      copyResetTimersRef.current.set(accountId, timer);
     } catch {
-      setCopyToast({ id: ++copyToastIdRef.current, message: "계좌번호를 복사하지 못했습니다." });
+      if (latestCopyAttemptRef.current.get(accountId) !== attempt) return;
+      setCopiedAccounts((current) => {
+        if (!current[accountId]) return current;
+        const next = { ...current };
+        delete next[accountId];
+        return next;
+      });
     }
   }
 
@@ -236,7 +258,7 @@ export function WeddingPracticalInfo() {
                           <button
                             type="button"
                             className="wedding-account-number"
-                            onClick={() => copyAccount(account.accountNumber)}
+                            onClick={() => copyAccount(account.accountNumber, `${side}-${account.role}`)}
                             aria-label={`${account.name} 계좌번호 복사`}
                           >
                             {account.accountNumber.replace(/[^0-9]/g, "")}
@@ -247,10 +269,10 @@ export function WeddingPracticalInfo() {
                           <button
                             type="button"
                             className="wedding-account-copy"
-                            onClick={() => copyAccount(account.accountNumber)}
-                            aria-label={`${account.name} 계좌번호 복사`}
+                            onClick={() => copyAccount(account.accountNumber, `${side}-${account.role}`)}
+                            aria-label={`${account.name} 계좌번호 ${copiedAccounts[`${side}-${account.role}`] ? "복사됨" : "복사"}`}
                           >
-                            복사
+                            {copiedAccounts[`${side}-${account.role}`] ? "✓ 복사됨" : "복사"}
                           </button>
                         </div>
                       </div>
@@ -269,11 +291,6 @@ export function WeddingPracticalInfo() {
         </div>
       </aside>
 
-      {copyToast && (
-        <div key={copyToast.id} className="wedding-copy-toast" role="status" aria-live="polite">
-          {copyToast.message}
-        </div>
-      )}
     </>
   );
 }
