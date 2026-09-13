@@ -6,45 +6,15 @@ import { BackgroundMusic, type BackgroundMusicHandle } from "@/components/backgr
 import { WeddingInvitation } from "@/components/wedding-invitation";
 import { lookupGuest, preloadGuestIndex } from "@/lib/guest-index";
 import { normalizeGuestName } from "@/lib/guest-index-crypto";
+import { createFallbackGreeting, type FallbackGreeting } from "@/lib/fallback-greetings";
 
 type AuthorizationState = "idle" | "checking" | "confirmed" | "request-error";
-type FallbackGreeting = { firstLine: string; secondLine: string };
 type IdentifiedGuest =
   | { name: string; type: "registered"; message: string }
   | { name: string; type: "easter_egg"; message: string }
   | { name: string; type: "fallback"; greeting: FallbackGreeting };
 
 const guestSessionCache = new Map<string, IdentifiedGuest>();
-
-const FALLBACK_FIRST_LINES = [
-  "이 초대가 닿아 기쁩니다.",
-  "반가운 이름을 확인했습니다.",
-  "좋은 소식을 전할 수 있어 기쁩니다.",
-  "저희에게 소중한 순간이 찾아왔습니다.",
-  "설레는 마음으로 인사드립니다.",
-  "저희의 기쁜 소식을 전합니다.",
-] as const;
-
-const FALLBACK_SECOND_LINES = [
-  "저희 두 사람의 첫걸음을 함께해 주세요.",
-  "좋은 날, 함께해 주시면 더없이 기쁘겠습니다.",
-  "새로운 시작을 함께 축복해 주세요.",
-  "저희의 새로운 시작에 모시고 싶습니다.",
-] as const;
-
-function createFallbackGreeting(): FallbackGreeting {
-  const firstLine = FALLBACK_FIRST_LINES[
-    Math.floor(Math.random() * FALLBACK_FIRST_LINES.length)
-  ];
-  const secondLine = FALLBACK_SECOND_LINES[
-    Math.floor(Math.random() * FALLBACK_SECOND_LINES.length)
-  ];
-
-  return {
-    firstLine,
-    secondLine,
-  };
-}
 
 export function InvitationExperience() {
   const [name, setName] = useState("");
