@@ -11,6 +11,7 @@ type AuthorizationState = "idle" | "checking" | "confirmed" | "request-error";
 type FallbackGreeting = { firstLine: string; secondLine: string };
 type IdentifiedGuest =
   | { name: string; type: "registered"; message: string }
+  | { name: string; type: "easter_egg"; message: string }
   | { name: string; type: "fallback"; greeting: FallbackGreeting };
 
 const guestSessionCache = new Map<string, IdentifiedGuest>();
@@ -113,7 +114,7 @@ export function InvitationExperience() {
       if (result.found) {
         identifiedGuest = {
           name: trimmedName,
-          type: "registered",
+          type: result.type === "easter_egg" ? "easter_egg" : "registered",
           message: result.message,
         };
       } else {
@@ -157,7 +158,8 @@ export function InvitationExperience() {
   }
 
   function openInvitation() {
-    if (isUnlocking || isInvitationOpen) return;
+    if (isUnlocking || isInvitationOpen || status !== "confirmed" ||
+        !guest || guest.type === "easter_egg") return;
 
     void backgroundMusicRef.current?.play();
 
@@ -270,17 +272,17 @@ export function InvitationExperience() {
 
             {status === "confirmed" && guest && (
               <div className="invitation-confirmed">
-                <div className="invitation-confirmed-title">
+                {guest.type !== "easter_egg" && <div className="invitation-confirmed-title">
                   <span aria-hidden="true">✓</span>
                   <div>
                     <p>초대 손님 확인 완료</p>
                   </div>
-                </div>
+                </div>}
                 <p className="invitation-guest-name">
                   {guest.name}{!guest.name.endsWith("님") && <> <span>님</span></>}
                 </p>
                 <p className="invitation-guest-message">
-                  {guest.type === "registered" ? (
+                  {guest.type !== "fallback" ? (
                     guest.message
                   ) : (
                     <>
@@ -293,7 +295,7 @@ export function InvitationExperience() {
                   type="button"
                   className="invitation-open-button"
                   onClick={openInvitation}
-                  disabled={isUnlocking}
+                  disabled={isUnlocking || guest.type === "easter_egg"}
                 >
                   <span>초대장 열기</span>
                 </button>

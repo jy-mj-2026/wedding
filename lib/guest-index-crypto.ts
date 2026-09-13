@@ -1,11 +1,11 @@
 export type GuestLookupResult =
-  | { found: true; message: string }
+  | { found: true; type: "invite" | "easter_egg"; message: string }
   | { found: false };
 
 type GuestIndexEntry = { iv: string; ciphertext: string };
 
 export type GuestIndex = {
-  version: 1;
+  version: 1 | 2;
   kdf: { name: "PBKDF2"; hash: "SHA-256"; iterations: 100000; salt: string };
   cipher: { name: "AES-GCM" };
   entries: Record<string, GuestIndexEntry>;
@@ -37,7 +37,7 @@ export function validateGuestIndex(value: unknown): GuestIndex {
   }
 
   const index = value as Partial<GuestIndex>;
-  if (index.version !== 1 || index.kdf?.name !== "PBKDF2" ||
+  if ((index.version !== 1 && index.version !== 2) || index.kdf?.name !== "PBKDF2" ||
       index.kdf.hash !== "SHA-256" || index.kdf.iterations !== 100000 ||
       index.cipher?.name !== "AES-GCM" || !index.entries ||
       typeof index.entries !== "object" || Array.isArray(index.entries)) {
@@ -90,7 +90,20 @@ export async function lookupGuestInIndex(index: GuestIndex, name: string): Promi
     encryptionKey,
     decodeBase64(entry.ciphertext)
   );
-  const message = new TextDecoder("utf-8", { fatal: true }).decode(plaintext);
-  if (!message.trim()) throw new Error("Guest message is empty");
-  return { found: true, message };
+  const decrypted = new TextDecoder("utf-8", { fatal: true }).decode(plaintext);
+  if (index.version === 1) {
+    if (!decrypted.trim()) throw new Error("Guest message is empty");
+    return { found: true, type: "invite", message: decrypted };
+  }
+
+  const payload: unknown = JSON.parse(decrypted);
+  if (!payload || typeof payload !== "object" || Array.isArray(payload)) {
+    throw new Error("Invalid guest payload");
+  }
+  const { type, message } = payload as Record<string, unknown>;
+  if ((type !== "invite" && type !== "easter_egg") ||
+      typeof message !== "string" || !message.trim()) {
+    throw new Error("Invalid guest payload");
+  }
+  return { found: true, type, message };
 }

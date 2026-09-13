@@ -60,13 +60,45 @@ test("active rows are encrypted, inactive rows excluded, and existing salt reuse
     const decipher = createDecipheriv("aes-256-gcm", derived.subarray(32), Buffer.from(encrypted.iv, "base64"));
     decipher.setAuthTag(ciphertext.subarray(-16));
     const decrypted = Buffer.concat([decipher.update(ciphertext.subarray(0, -16)), decipher.final()]).toString("utf8");
-    assert.equal(decrypted, message);
+    assert.deepEqual(JSON.parse(decrypted), { type: "invite", message });
+    assert.equal(index.version, 2);
 
     await buildGuestIndex({ inputPath, outputPath });
     const rebuilt = JSON.parse(await fs.readFile(outputPath, "utf8"));
     assert.equal(rebuilt.kdf.salt, index.kdf.salt);
     assert.ok(rebuilt.entries[lookupId]);
     assert.notEqual(rebuilt.entries[lookupId].iv, encrypted.iv);
+  });
+});
+
+test("optional type encrypts Easter Egg payload and rejects invalid active types", async () => {
+  await withTemporaryFiles(async ({ inputPath, outputPath }) => {
+    await fs.writeFile(inputPath,
+      "name,side,relation,message,active,type\nReal Name,,,Use your other name.,TRUE,easter_egg\nAlias,,,Personal invitation.,TRUE,invite\nOrdinary,,,Welcome.,TRUE,\nLegacy,,,Hello.,TRUE", "utf8");
+    const { count } = await buildGuestIndex({ inputPath, outputPath });
+    assert.equal(count, 4);
+    const indexText = await fs.readFile(outputPath, "utf8");
+    const index = JSON.parse(indexText);
+    assert.ok(!indexText.includes("easter_egg"));
+    assert.ok(!indexText.includes("Real Name"));
+    assert.ok(!indexText.includes("Use your other name."));
+
+    for (const [name, expectedType] of [["Real Name", "easter_egg"], ["Alias", "invite"],
+      ["Ordinary", "invite"], ["Legacy", "invite"]]) {
+      const derived = pbkdf2Sync(normalizeGuestName(name), Buffer.from(index.kdf.salt, "base64"), 100_000, 64, "sha256");
+      const entry = index.entries[derived.subarray(0, 32).toString("hex")];
+      const bytes = Buffer.from(entry.ciphertext, "base64");
+      const decipher = createDecipheriv("aes-256-gcm", derived.subarray(32), Buffer.from(entry.iv, "base64"));
+      decipher.setAuthTag(bytes.subarray(-16));
+      const payload = JSON.parse(Buffer.concat([decipher.update(bytes.subarray(0, -16)), decipher.final()]).toString("utf8"));
+      assert.equal(payload.type, expectedType);
+    }
+
+    const previous = await fs.readFile(outputPath, "utf8");
+    await fs.writeFile(inputPath,
+      "name,side,relation,message,active,type\nSomeone,,,Hello.,TRUE,unknown", "utf8");
+    await assert.rejects(buildGuestIndex({ inputPath, outputPath }), /2.*type/);
+    assert.equal(await fs.readFile(outputPath, "utf8"), previous);
   });
 });
 

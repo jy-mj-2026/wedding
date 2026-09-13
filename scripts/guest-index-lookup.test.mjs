@@ -1,11 +1,12 @@
 import assert from "node:assert/strict";
 import { pbkdf2Sync } from "node:crypto";
 import { promises as fs } from "node:fs";
-import { resolve } from "node:path";
+import { tmpdir } from "node:os";
+import { basename, join, resolve } from "node:path";
 import test from "node:test";
 import { runInNewContext } from "node:vm";
 import ts from "typescript";
-import { parseCsv } from "./build-guest-index.mjs";
+import { buildGuestIndex, parseCsv } from "./build-guest-index.mjs";
 import {
   lookupGuestInIndex,
   normalizeGuestName,
@@ -44,6 +45,7 @@ test("the real encrypted index matches two active private CSV rows without print
   const nameColumn = headers.indexOf("name");
   const messageColumn = headers.indexOf("message");
   const activeColumn = headers.indexOf("active");
+  const typeColumn = headers.indexOf("type");
   const activeRows = rows.slice(1).filter((row) =>
     ["true", "1", "y", "yes"].includes(row.fields[activeColumn].trim().toLowerCase())
   );
@@ -52,8 +54,10 @@ test("the real encrypted index matches two active private CSV rows without print
   for (const row of activeRows.slice(0, 2)) {
     const name = row.fields[nameColumn];
     const expectedMessage = row.fields[messageColumn];
+    const expectedType = typeColumn < 0 ? "invite" : row.fields[typeColumn]?.trim().toLowerCase() || "invite";
     const result = await lookupGuestInIndex(index, name);
-    assert.ok(result.found && result.message === expectedMessage, "Registered lookup mismatch");
+    assert.ok(result.found && result.type === expectedType && result.message === expectedMessage,
+      "Registered lookup mismatch");
   }
 
   const firstName = activeRows[0].fields[nameColumn];
@@ -89,7 +93,7 @@ test("the real encrypted index matches two active private CSV rows without print
   corruptIvIndex.entries[lookupId].iv = iv.toString("base64");
   await assert.rejects(lookupGuestInIndex(validateGuestIndex(corruptIvIndex), firstName));
 
-  assert.throws(() => validateGuestIndex({ ...index, version: 2 }));
+  assert.throws(() => validateGuestIndex({ ...index, version: 3 }));
   assert.throws(() => validateGuestIndex({ ...index, kdf: { ...index.kdf, salt: "bad" } }));
   assert.deepEqual(Object.keys(index), ["version", "kdf", "cipher", "entries"]);
   assert.deepEqual(Object.keys(index.kdf), ["name", "hash", "iterations", "salt"]);
@@ -99,6 +103,31 @@ test("the real encrypted index matches two active private CSV rows without print
   for (const row of activeRows) {
     assert.ok(!indexText.includes(row.fields[nameColumn]), "Plaintext name in public index");
     assert.ok(!indexText.includes(row.fields[messageColumn]), "Plaintext message in public index");
+  }
+});
+
+test("encrypted Easter Egg and alias entries decrypt to distinct typed results", async () => {
+  const directory = await fs.mkdtemp(join(tmpdir(), "wedding-easter-egg-test-"));
+  try {
+    const inputPath = join(directory, "guests.csv");
+    const outputPath = join(directory, "guest-index.json");
+    await fs.writeFile(inputPath,
+      "name,side,relation,message,active,type\nReal Name A,,,Use your other name.,TRUE,easter_egg\nReal Name B,,,This name cannot enter.,TRUE,easter_egg\nAlias,,,Personal invitation.,TRUE,invite\nOrdinary,,,Welcome.,TRUE,", "utf8");
+    await buildGuestIndex({ inputPath, outputPath });
+    const index = validateGuestIndex(JSON.parse(await fs.readFile(outputPath, "utf8")));
+    assert.deepEqual(await lookupGuestInIndex(index, "Real Name A"),
+      { found: true, type: "easter_egg", message: "Use your other name." });
+    assert.deepEqual(await lookupGuestInIndex(index, "Real Name B"),
+      { found: true, type: "easter_egg", message: "This name cannot enter." });
+    assert.deepEqual(await lookupGuestInIndex(index, "Alias"),
+      { found: true, type: "invite", message: "Personal invitation." });
+    assert.deepEqual(await lookupGuestInIndex(index, "Ordinary"),
+      { found: true, type: "invite", message: "Welcome." });
+    assert.deepEqual(await lookupGuestInIndex(index, "Unknown"), { found: false });
+  } finally {
+    if (basename(directory).startsWith("wedding-easter-egg-test-")) {
+      await fs.rm(directory, { recursive: true, force: true });
+    }
   }
 });
 

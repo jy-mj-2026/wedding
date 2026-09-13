@@ -5,6 +5,7 @@ import { createCipheriv, createDecipheriv, pbkdf2Sync, randomBytes } from "node:
 const ITERATIONS = 100_000;
 const REQUIRED_HEADERS = ["name", "side", "relation", "message", "active"];
 const ACTIVE_VALUES = new Set(["true", "1", "y", "yes"]);
+const GUEST_TYPES = new Set(["invite", "easter_egg"]);
 
 export function normalizeGuestName(value) {
   return String(value).normalize("NFC").trim().replace(/\s/gu, "").replace(/님$/u, "").toLowerCase();
@@ -108,11 +109,19 @@ function readActiveGuests(csv) {
   const nameIndex = headers.indexOf("name");
   const messageIndex = headers.indexOf("message");
   const activeIndex = headers.indexOf("active");
+  const typeIndex = headers.indexOf("type");
   const guests = new Map();
 
   for (const row of rows.slice(1)) {
-    if (row.fields.length !== headers.length) {
+    // A newly appended, empty type column may be omitted from older CSV rows.
+    const missingEmptyType = typeIndex === headers.length - 1 &&
+      row.fields.length === headers.length - 1;
+    if (row.fields.length !== headers.length && !missingEmptyType) {
       throw new Error(`CSV ${row.line}행: 헤더와 필드 개수가 다릅니다.`);
+    }
+    const type = (typeIndex < 0 ? "" : row.fields[typeIndex] ?? "").trim().toLowerCase() || "invite";
+    if (!GUEST_TYPES.has(type)) {
+      throw new Error(`CSV ${row.line}행: type은 invite 또는 easter_egg여야 합니다.`);
     }
     if (!ACTIVE_VALUES.has(row.fields[activeIndex].trim().toLowerCase())) {
       continue;
@@ -129,7 +138,7 @@ function readActiveGuests(csv) {
     if (previous) {
       throw new Error(`CSV ${row.line}행: 중복된 성함 "${rawName}" (이전 ${previous.line}행).`);
     }
-    guests.set(normalizedName, { message, line: row.line });
+    guests.set(normalizedName, { type, message, line: row.line });
   }
 
   return guests;
@@ -152,7 +161,7 @@ async function loadSalt(outputPath) {
   }
   const saltText = index?.kdf?.salt;
   const salt = typeof saltText === "string" ? Buffer.from(saltText, "base64") : null;
-  if (index?.version !== 1 || index?.kdf?.name !== "PBKDF2" ||
+  if (![1, 2].includes(index?.version) || index?.kdf?.name !== "PBKDF2" ||
       index?.kdf?.hash !== "SHA-256" || index?.kdf?.iterations !== ITERATIONS ||
       index?.cipher?.name !== "AES-GCM" || !salt || salt.length < 16 ||
       salt.toString("base64") !== saltText) {
@@ -197,7 +206,7 @@ export async function buildGuestIndex({
   const checks = [];
   const usedIvs = new Set();
 
-  for (const [normalizedName, { message }] of guests) {
+  for (const [normalizedName, { type, message }] of guests) {
     const derived = pbkdf2Sync(normalizedName, salt, ITERATIONS, 64, "sha256");
     const lookupId = derived.subarray(0, 32).toString("hex");
     const key = derived.subarray(32, 64);
@@ -208,21 +217,22 @@ export async function buildGuestIndex({
     const ivText = iv.toString("base64");
     usedIvs.add(ivText);
 
-    entries[lookupId] = { iv: ivText, ciphertext: encryptMessage(message, key, iv) };
-    checks.push({ lookupId, key, message });
+    const payload = JSON.stringify({ type, message });
+    entries[lookupId] = { iv: ivText, ciphertext: encryptMessage(payload, key, iv) };
+    checks.push({ lookupId, key, payload });
   }
 
   const index = {
-    version: 1,
+    version: 2,
     kdf: { name: "PBKDF2", hash: "SHA-256", iterations: ITERATIONS, salt: salt.toString("base64") },
     cipher: { name: "AES-GCM" },
     entries,
   };
   const output = `${JSON.stringify(index, null, 2)}\n`;
   const serialized = JSON.parse(output);
-  for (const { lookupId, key, message } of checks) {
+  for (const { lookupId, key, payload } of checks) {
     const entry = serialized.entries[lookupId];
-    if (decryptMessage(entry.ciphertext, key, entry.iv) !== message) {
+    if (decryptMessage(entry.ciphertext, key, entry.iv) !== payload) {
       throw new Error("암호화 결과 검증에 실패하여 index를 생성하지 않았습니다.");
     }
   }
