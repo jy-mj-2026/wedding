@@ -123,7 +123,7 @@ test("normalized duplicate names fail with both CSV row numbers", async () => {
 
 test("missing source produces a clear generator-only error", async () => {
   await withTemporaryFiles(async ({ inputPath, outputPath }) => {
-    await assert.rejects(buildGuestIndex({ inputPath, outputPath }), /private\/guests\.csv 파일을 찾을 수 없습니다/);
+    await assert.rejects(buildGuestIndex({ inputPath, outputPath }), /private\/Wedding Guests - guests\.csv 파일을 찾을 수 없습니다/);
     await assert.rejects(fs.readFile(outputPath, "utf8"), { code: "ENOENT" });
   });
 });

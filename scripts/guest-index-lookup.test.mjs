@@ -37,7 +37,7 @@ async function createLoader(fetchMock) {
 }
 
 test("the real encrypted index matches two active private CSV rows without printing personal data", async () => {
-  const csv = await fs.readFile(resolve("private/guests.csv"), "utf8");
+  const csv = await fs.readFile(resolve("private/Wedding Guests - guests.csv"), "utf8");
   const indexText = await fs.readFile(resolve("public/data/guest-index.json"), "utf8");
   const index = validateGuestIndex(JSON.parse(indexText));
   const rows = parseCsv(csv);

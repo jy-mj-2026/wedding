@@ -187,7 +187,7 @@ function decryptMessage(ciphertext, key, ivText) {
 }
 
 export async function buildGuestIndex({
-  inputPath = resolve("private/guests.csv"),
+  inputPath = resolve("private/Wedding Guests - guests.csv"),
   outputPath = resolve("public/data/guest-index.json"),
 } = {}) {
   let csv;
@@ -195,7 +195,7 @@ export async function buildGuestIndex({
     csv = await fs.readFile(inputPath, "utf8");
   } catch (error) {
     if (error.code === "ENOENT") {
-      throw new Error("private/guests.csv 파일을 찾을 수 없습니다.");
+      throw new Error("private/Wedding Guests - guests.csv 파일을 찾을 수 없습니다.");
     }
     throw error;
   }
